@@ -1,3 +1,21 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+/* Material Select Panel - Solid Background */
+::ng-deep .solid-select-panel {
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+}
+
+::ng-deep .solid-select-panel .mat-mdc-option {
+    background-color: #ffffff !important;
+}
+
+::ng-deep .solid-select-panel .mat-mdc-option:hover {
+    background-color: #f8f9fb !important;
+}
+
+::ng-deep .solid-select-panel .mat-mdc-option.mdc-list-item--selected {
+    background-color: #eff6ff !important;
+}
