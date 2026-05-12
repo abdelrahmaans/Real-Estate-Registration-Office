@@ -32,18 +32,18 @@ import { RouterLink } from '@angular/router';
   `,
   styles: [
     `
-      .dashboard-shell{padding:24px;min-height:100vh;background:#f7fafc;color:#0f172a}
-      .hero-card{padding:24px;margin-bottom:16px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:16px;box-shadow:0 6px 24px rgba(15,23,42,.05)}
-      .eyebrow{margin:0 0 6px;color:#2563eb;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem}
-      .muted{margin:10px 0 0;color:#475569;line-height:1.8}
+      .dashboard-shell{padding:24px;min-height:100vh;background:var(--page-bg);color:var(--text-primary)}
+      .hero-card{padding:24px;margin-bottom:16px;background:var(--surface-solid);border:1px solid var(--card-border);border-radius:16px;box-shadow:var(--card-shadow)}
+      .eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem}
+      .muted{margin:10px 0 0;color:var(--text-secondary);line-height:1.8}
       h1{margin:0;font-size:clamp(1.8rem, 3vw, 3rem)}
       .quick-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-      .quick-card{display:grid;gap:10px;padding:18px;border-radius:16px;background:#fff;border:1px solid rgba(15,23,42,.08);box-shadow:0 6px 20px rgba(15,23,42,.04);text-decoration:none;color:#0f172a;min-height:132px;transition:transform 160ms ease,box-shadow 160ms ease,border-color 160ms ease}
-      .quick-card--primary{background:linear-gradient(180deg,#2563eb,#1d4ed8);color:#fff;box-shadow:0 10px 24px rgba(37,99,235,.18)}
+      .quick-card{display:grid;gap:10px;padding:18px;border-radius:16px;background:var(--surface-solid);border:1px solid var(--card-border);box-shadow:var(--card-shadow);text-decoration:none;color:var(--text-primary);min-height:132px;transition:transform 160ms ease,box-shadow 160ms ease,border-color 160ms ease}
+      .quick-card--primary{background:linear-gradient(180deg,var(--accent),#1d4ed8);color:var(--accent-contrast);box-shadow:0 10px 24px rgba(37,99,235,.18)}
       .quick-card__title{font-size:1.05rem;font-weight:700}
       .quick-card__text{color:inherit;opacity:.82;line-height:1.7}
-      .quick-card:hover,.quick-card:focus-visible{transform:translateY(-2px);border-color:rgba(37,99,235,.22)}
-      .quick-card:focus-visible{outline:2px solid rgba(37,99,235,.28);outline-offset:3px}
+      .quick-card:hover,.quick-card:focus-visible{transform:translateY(-2px);border-color:var(--accent-border)}
+      .quick-card:focus-visible{outline:2px solid var(--accent-border-strong);outline-offset:3px}
       @media (max-width: 900px){.quick-grid{grid-template-columns:1fr}.dashboard-shell{padding:16px}}
     `,
   ]

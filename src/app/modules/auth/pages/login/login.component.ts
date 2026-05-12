@@ -10,19 +10,19 @@ import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '@core/services/auth.service';
 
 @Component({
-    selector: 'app-login',
-    standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        RouterModule,
-        MatCardModule,
-        MatFormFieldModule,
-        MatInputModule,
-        MatButtonModule,
-        MatIconModule,
-    ],
-    template: `
+  selector: 'app-login',
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
+  template: `
       <section class="login-page" dir="rtl">
         <div class="login-card">
           <p class="eyebrow">نظام السجل العقاري</p>
@@ -57,58 +57,58 @@ import { AuthService } from '@core/services/auth.service';
         </div>
       </section>
     `,
-    styles: [
-        `
-          .login-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,#f8fafc 0%,#eef4fb 100%)}
-          .login-card{width:min(100%,440px);padding:28px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:20px;box-shadow:0 16px 40px rgba(15,23,42,.08)}
-          .eyebrow{margin:0 0 8px;color:#2563eb;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.78rem}
-          h2{margin:0;color:#0f172a;font-size:1.8rem}
-          .muted{margin:10px 0 0;color:#475569;line-height:1.8}
+  styles: [
+    `
+          .login-page{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(180deg,var(--page-bg-top) 0%,var(--page-bg-bottom) 100%)}
+          .login-card{width:min(100%,440px);padding:28px;background:var(--surface-solid);border:1px solid var(--card-border);border-radius:20px;box-shadow:var(--card-shadow)}
+          .eyebrow{margin:0 0 8px;color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.78rem}
+          h2{margin:0;color:var(--text-primary);font-size:1.8rem}
+          .muted{margin:10px 0 0;color:var(--text-secondary);line-height:1.8}
           .login-form{display:grid;gap:14px;margin-top:20px}
-          .btn-primary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:none;border-radius:12px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 10px 20px rgba(37,99,235,.18);transition:transform 160ms ease,box-shadow 160ms ease,background-color 160ms ease}
+          .btn-primary{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border:none;border-radius:12px;background:var(--accent);color:var(--accent-contrast);font-weight:700;cursor:pointer;box-shadow:0 10px 20px rgba(37,99,235,.18);transition:transform 160ms ease,box-shadow 160ms ease,background-color 160ms ease}
           .btn-primary:hover:not(:disabled),.btn-primary:focus-visible{transform:translateY(-1px)}
-          .btn-primary:focus-visible{outline:2px solid rgba(37,99,235,.28);outline-offset:3px}
+          .btn-primary:focus-visible{outline:2px solid var(--accent-border-strong);outline-offset:3px}
           .btn-primary:disabled{opacity:.65;cursor:not-allowed;box-shadow:none}
-          .error-message{margin:0;color:#b91c1c;font-weight:600}
-          .error-hint{color:#b91c1c}
+          .error-message{margin:0;color:var(--danger);font-weight:600}
+          .error-hint{color:var(--danger)}
         `,
-    ],
+  ],
 })
 export class LoginComponent {
-    private readonly fb = inject(FormBuilder);
-    private readonly auth = inject(AuthService);
-    private readonly router = inject(Router);
-    private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-    form = this.fb.nonNullable.group({
-        email: ['', [Validators.required, Validators.email]],
-        password: ['', [Validators.required]],
-    });
+  form = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required]],
+  });
 
-    loading = signal(false);
-    error = signal('');
+  loading = signal(false);
+  error = signal('');
 
-    async onSubmit() {
-        if (this.form.invalid) return;
-        this.loading.set(true);
-        this.error.set('');
+  async onSubmit() {
+    if (this.form.invalid) return;
+    this.loading.set(true);
+    this.error.set('');
 
-        const { email, password } = this.form.getRawValue();
-        try {
-            const result = await this.auth.login({
-                email: email.trim(),
-                password,
-            });
-            if (result.success) {
-                const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
-                await this.router.navigateByUrl(returnUrl);
-            } else {
-                this.error.set(result.error || 'فشل تسجيل الدخول');
-            }
-        } catch (err: any) {
-            this.error.set(err?.message || 'فشل تسجيل الدخول');
-        } finally {
-            this.loading.set(false);
-        }
+    const { email, password } = this.form.getRawValue();
+    try {
+      const result = await this.auth.login({
+        email: email.trim(),
+        password,
+      });
+      if (result.success) {
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
+        await this.router.navigateByUrl(returnUrl);
+      } else {
+        this.error.set(result.error || 'فشل تسجيل الدخول');
+      }
+    } catch (err: any) {
+      this.error.set(err?.message || 'فشل تسجيل الدخول');
+    } finally {
+      this.loading.set(false);
     }
+  }
 }

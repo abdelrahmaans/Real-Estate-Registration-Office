@@ -2,7 +2,7 @@
     display: block;
     min-height: 100vh;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 * {
@@ -13,7 +13,8 @@ html,
 body {
     margin: 0;
     min-height: 100%;
-    background: #f1f5f9;
+    background: var(--page-bg);
+    color: var(--text-primary);
 }
 
 .app-shell {
@@ -22,9 +23,9 @@ body {
     overflow: hidden;
     padding: 20px;
     background:
-        radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 30%),
-        radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 26%),
-        linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+        radial-gradient(circle at top left, var(--page-glow-one), transparent 30%),
+        radial-gradient(circle at top right, var(--page-glow-two), transparent 26%),
+        linear-gradient(180deg, var(--page-bg-top) 0%, var(--page-bg-bottom) 100%);
 }
 
 .app-shell__glow {
@@ -40,7 +41,7 @@ body {
     inset-block-start: 90px;
     width: 180px;
     height: 180px;
-    background: rgba(59, 130, 246, 0.18);
+    background: var(--page-glow-one);
 }
 
 .app-shell__glow--two {
@@ -48,7 +49,7 @@ body {
     inset-block-start: 28px;
     width: 220px;
     height: 220px;
-    background: rgba(16, 185, 129, 0.12);
+    background: var(--page-glow-two);
 }
 
 .topbar {
@@ -59,11 +60,11 @@ body {
     justify-content: space-between;
     gap: 16px;
     padding: 18px 22px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
+    border: 1px solid var(--surface-border);
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--surface);
     backdrop-filter: blur(12px);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    box-shadow: var(--surface-shadow);
 }
 
 .brand {
@@ -78,8 +79,8 @@ body {
     width: 54px;
     height: 54px;
     border-radius: 18px;
-    background: linear-gradient(135deg, #2563eb, #0ea5e9);
-    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    color: var(--accent-contrast);
     font-size: 1.5rem;
     font-weight: 800;
     box-shadow: 0 14px 34px rgba(37, 99, 235, 0.18);
@@ -92,7 +93,7 @@ body {
 
 .brand__eyebrow {
     margin: 0;
-    color: #2563eb;
+    color: var(--accent);
     font-size: 0.78rem;
     letter-spacing: 0.16em;
     text-transform: uppercase;
@@ -101,7 +102,7 @@ body {
 .brand__text h1 {
     margin: 0;
     font-size: clamp(1.1rem, 2vw, 1.55rem);
-    color: #0f172a;
+    color: var(--text-primary);
 }
 
 .topbar__status {
@@ -110,9 +111,9 @@ body {
     gap: 10px;
     padding: 10px 14px;
     border-radius: 999px;
-    background: #eff6ff;
-    border: 1px solid rgba(37, 99, 235, 0.12);
-    color: #1d4ed8;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    color: var(--accent);
     font-weight: 600;
 }
 
@@ -120,14 +121,39 @@ body {
     width: 10px;
     height: 10px;
     border-radius: 999px;
-    background: #22c55e;
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.1);
+    background: var(--success);
+    box-shadow: 0 0 0 6px var(--success-ring);
 }
 
 .topbar__actions {
     display: flex;
     align-items: center;
     gap: 16px;
+}
+
+.topbar__theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.topbar__theme-toggle:hover {
+    background-color: var(--surface-hover);
+    border-color: var(--accent-border);
+    color: var(--accent);
+}
+
+.topbar__theme-toggle:focus-visible {
+    outline: 2px solid var(--accent-border-strong);
+    outline-offset: 2px;
 }
 
 .topbar__logout {
@@ -138,19 +164,19 @@ body {
     height: 36px;
     border-radius: 10px;
     background: transparent;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    color: #1d4ed8;
+    border: 1px solid var(--surface-border);
+    color: var(--accent);
     cursor: pointer;
-    transition: background-color 160ms ease, border-color 160ms ease;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
 .topbar__logout:hover {
-    background-color: #eff6ff;
-    border-color: rgba(37, 99, 235, 0.22);
+    background-color: var(--accent-soft);
+    border-color: var(--accent-border);
 }
 
 .topbar__logout:focus-visible {
-    outline: 2px solid rgba(37, 99, 235, 0.28);
+    outline: 2px solid var(--accent-border-strong);
     outline-offset: 2px;
 }
 

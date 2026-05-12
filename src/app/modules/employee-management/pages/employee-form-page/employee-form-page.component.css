@@ -124,3 +124,20 @@
         flex-direction: column;
     }
 }
+
+:host-context(.dark-theme) .panel {
+    background: var(--surface-solid);
+    border-color: var(--surface-border);
+}
+
+:host-context(.dark-theme) .kicker {
+    color: var(--accent) !important;
+}
+
+:host-context(.dark-theme) .panel__header h1 {
+    color: var(--text-primary) !important;
+}
+
+:host-context(.dark-theme) .panel__header p {
+    color: var(--text-secondary) !important;
+}

@@ -9,11 +9,11 @@ import { LettersService } from '../../services/letters.service';
 import { LetterCreatePayload } from '../../models/letter.model';
 
 @Component({
-    selector: 'app-letters-form',
-    standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    template: `
+  selector: 'app-letters-form',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
     <section class="form-shell" dir="rtl">
       <div class="form-header">
         <p class="eyebrow">الخطابات</p>
@@ -65,62 +65,62 @@ import { LetterCreatePayload } from '../../models/letter.model';
       <p *ngIf="success()" class="success">{{ success() }}</p>
     </section>
   `,
-    styles: [
-        `
-      .form-shell{padding:24px;max-width:860px;margin:0 auto;background:#f7fafc;min-height:100vh;color:#0f172a}
+  styles: [
+    `
+      .form-shell{padding:24px;max-width:860px;margin:0 auto;background:var(--page-bg);min-height:100vh;color:var(--text-primary)}
       .form-header{margin-bottom:16px}
-      .eyebrow{margin:0 0 6px;color:#2563eb;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem}
-      .muted{margin:0;color:#475569}
-      .form-card{display:grid;gap:14px;padding:20px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:16px;box-shadow:0 6px 24px rgba(15,23,42,.05)}
+      .eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.78rem}
+      .muted{margin:0;color:var(--text-secondary)}
+      .form-card{display:grid;gap:14px;padding:20px;background:var(--surface-solid);border:1px solid var(--card-border);border-radius:16px;box-shadow:var(--card-shadow)}
       .form-actions{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap;margin-top:6px}
       .btn-primary,.btn-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:10px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:transform 160ms ease,box-shadow 160ms ease,border-color 160ms ease,background-color 160ms ease}
-      .btn-primary{background:#2563eb;color:#fff;box-shadow:0 10px 20px rgba(37,99,235,.18)}
+      .btn-primary{background:var(--accent);color:var(--accent-contrast);box-shadow:0 10px 20px rgba(37,99,235,.18)}
       .btn-primary:disabled{opacity:.55;cursor:not-allowed}
-      .btn-secondary{background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.14)}
+      .btn-secondary{background:var(--surface-solid);color:var(--text-primary);border:1px solid var(--surface-border)}
       .btn-primary:hover:not(:disabled),.btn-primary:focus-visible,.btn-secondary:hover,.btn-secondary:focus-visible{transform:translateY(-1px)}
-      .btn-primary:focus-visible,.btn-secondary:focus-visible{outline:2px solid rgba(37,99,235,.28);outline-offset:3px}
-      .error{color:#b91c1c;margin:12px 0 0}
-      .success{color:#166534;margin:12px 0 0}
+      .btn-primary:focus-visible,.btn-secondary:focus-visible{outline:2px solid var(--accent-border-strong);outline-offset:3px}
+      .error{color:var(--danger);margin:12px 0 0}
+      .success{color:var(--success-dark);margin:12px 0 0}
       @media (max-width: 720px){.form-shell{padding:16px}}
     `,
-    ],
+  ],
 })
 export class LettersFormComponent {
-    private fb = inject(FormBuilder);
-    private svc = inject(LettersService);
-    private router = inject(Router);
+  private fb = inject(FormBuilder);
+  private svc = inject(LettersService);
+  private router = inject(Router);
 
-    submitting = signal(false);
-    error = signal<string | null>(null);
-    success = signal<string | null>(null);
+  submitting = signal(false);
+  error = signal<string | null>(null);
+  success = signal<string | null>(null);
 
-    form = this.fb.nonNullable.group({
-        letter_number: ['', Validators.required],
-        serial_number: [''],
-        type: ['incoming' as const, Validators.required],
-        category: ['general'],
-        letter_date: [new Date().toISOString().slice(0, 10)],
-        subject: ['', Validators.required],
-        summary: [''],
-        priority: ['normal'],
-        status: ['new'],
-    });
+  form = this.fb.nonNullable.group({
+    letter_number: ['', Validators.required],
+    serial_number: [''],
+    type: ['incoming' as const, Validators.required],
+    category: ['general'],
+    letter_date: [new Date().toISOString().slice(0, 10)],
+    subject: ['', Validators.required],
+    summary: [''],
+    priority: ['normal'],
+    status: ['new'],
+  });
 
-    async onSubmit() {
-        if (this.form.invalid) return;
-        this.submitting.set(true);
-        this.error.set(null);
+  async onSubmit() {
+    if (this.form.invalid) return;
+    this.submitting.set(true);
+    this.error.set(null);
 
-        const payload = this.form.getRawValue() as LetterCreatePayload;
-        const res = await this.svc.create(payload);
+    const payload = this.form.getRawValue() as LetterCreatePayload;
+    const res = await this.svc.create(payload);
 
-        this.submitting.set(false);
-        if (res.error) {
-            this.error.set(res.error);
-            return;
-        }
-
-        this.success.set('تم الحفظ');
-        setTimeout(() => this.router.navigate(['/letters']), 700);
+    this.submitting.set(false);
+    if (res.error) {
+      this.error.set(res.error);
+      return;
     }
+
+    this.success.set('تم الحفظ');
+    setTimeout(() => this.router.navigate(['/letters']), 700);
+  }
 }

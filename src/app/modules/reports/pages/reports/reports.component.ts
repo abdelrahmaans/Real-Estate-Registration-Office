@@ -5,10 +5,10 @@ import { EmployeeService } from '../../../employee-management/services/employee.
 import { LettersService } from '../../../letters/services/letters.service';
 
 @Component({
-    selector: 'app-reports',
-    standalone: true,
-    imports: [CommonModule, RouterLink],
-    template: `
+  selector: 'app-reports',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  template: `
     <section class="reports-shell" dir="rtl">
       <div class="reports-header">
         <p class="eyebrow">التقارير</p>
@@ -59,65 +59,65 @@ import { LettersService } from '../../../letters/services/letters.service';
       </div>
     </section>
   `,
-    styles: [
-        `
-      .reports-shell{padding:24px;min-height:100vh;background:#f7fafc;color:#0f172a}
+  styles: [
+    `
+      .reports-shell{padding:24px;min-height:100vh;background:var(--page-bg);color:var(--text-primary)}
       .reports-header{margin-bottom:24px}
-      .eyebrow{margin:0 0 6px;color:#2563eb;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.78rem}
+      .eyebrow{margin:0 0 6px;color:var(--accent);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.78rem}
       h1{margin:0;font-size:clamp(1.8rem,3vw,2.5rem)}
-      .muted{margin:10px 0 0;color:#475569;line-height:1.8}
+      .muted{margin:10px 0 0;color:var(--text-secondary);line-height:1.8}
       .reports-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
-      .report-card{padding:18px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:16px;box-shadow:0 6px 20px rgba(15,23,42,.04)}
-      .card-label{margin:0 0 8px;color:#2563eb;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:.75rem}
-      .card-value{margin:0;font-size:clamp(1.8rem,3vw,2.4rem);font-weight:800;color:#0f172a}
-      .card-hint{margin:8px 0 0;color:#475569;font-size:.9rem;line-height:1.6}
+      .report-card{padding:18px;background:var(--surface-solid);border:1px solid var(--card-border);border-radius:16px;box-shadow:var(--card-shadow)}
+      .card-label{margin:0 0 8px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:.75rem}
+      .card-value{margin:0;font-size:clamp(1.8rem,3vw,2.4rem);font-weight:800;color:var(--text-primary)}
+      .card-hint{margin:8px 0 0;color:var(--text-secondary);font-size:.9rem;line-height:1.6}
       .reports-actions{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap}
-      .btn-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid rgba(15,23,42,.14);background:#fff;color:#0f172a;cursor:pointer;transition:transform 160ms ease,box-shadow 160ms ease}
+      .btn-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid var(--surface-border);background:var(--surface-solid);color:var(--text-primary);cursor:pointer;transition:transform 160ms ease,box-shadow 160ms ease}
       .btn-secondary:hover,.btn-secondary:focus-visible{transform:translateY(-1px)}
-      .btn-secondary:focus-visible{outline:2px solid rgba(37,99,235,.28);outline-offset:3px}
+      .btn-secondary:focus-visible{outline:2px solid var(--accent-border-strong);outline-offset:3px}
       @media (max-width:720px){.reports-shell{padding:16px}.reports-grid{grid-template-columns:1fr}}
     `,
-    ],
+  ],
 })
 export class ReportsComponent {
-    private employeeSvc = inject(EmployeeService);
-    private lettersSvc = inject(LettersService);
+  private employeeSvc = inject(EmployeeService);
+  private lettersSvc = inject(LettersService);
 
-    employees = signal<any[]>([]);
-    letters = signal<any[]>([]);
+  employees = signal<any[]>([]);
+  letters = signal<any[]>([]);
 
-    totalEmployees = computed(() => this.employees().length);
-    activeEmployees = computed(() =>
-        this.employees().filter(e => e.employment_status === 'active').length
-    );
+  totalEmployees = computed(() => this.employees().length);
+  activeEmployees = computed(() =>
+    this.employees().filter(e => e.employment_status === 'active').length
+  );
 
-    totalLetters = computed(() => this.letters().length);
-    incomingLetters = computed(() =>
-        this.letters().filter(l => l.type === 'incoming').length
-    );
-    outgoingLetters = computed(() =>
-        this.letters().filter(l => l.type === 'outgoing').length
-    );
+  totalLetters = computed(() => this.letters().length);
+  incomingLetters = computed(() =>
+    this.letters().filter(l => l.type === 'incoming').length
+  );
+  outgoingLetters = computed(() =>
+    this.letters().filter(l => l.type === 'outgoing').length
+  );
 
-    responseRate = computed(() => {
-        const total = this.totalLetters();
-        if (total === 0) return 0;
-        return Math.round((this.totalLetters() / Math.max(1, total + 10)) * 100);
-    });
+  responseRate = computed(() => {
+    const total = this.totalLetters();
+    if (total === 0) return 0;
+    return Math.round((this.totalLetters() / Math.max(1, total + 10)) * 100);
+  });
 
-    constructor() {
-        this.loadData();
+  constructor() {
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    const empRes = await this.employeeSvc.list();
+    if (!empRes.error) {
+      this.employees.set(empRes.data || []);
     }
 
-    private async loadData(): Promise<void> {
-        const empRes = await this.employeeSvc.list();
-        if (!empRes.error) {
-            this.employees.set(empRes.data || []);
-        }
-
-        const lettersRes = await this.lettersSvc.list();
-        if (!lettersRes.error) {
-            this.letters.set(lettersRes.data || []);
-        }
+    const lettersRes = await this.lettersSvc.list();
+    if (!lettersRes.error) {
+      this.letters.set(lettersRes.data || []);
     }
+  }
 }
