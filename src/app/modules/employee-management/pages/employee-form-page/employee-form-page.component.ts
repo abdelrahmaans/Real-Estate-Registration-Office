@@ -59,6 +59,11 @@ import { EmployeeService } from '../../services/employee.service';
             </mat-form-field>
 
             <mat-form-field appearance="outline">
+              <mat-label>كود المكتب</mat-label>
+              <input matInput formControlName="office_code" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
               <mat-label>الوظيفة</mat-label>
               <input matInput formControlName="job_title" />
             </mat-form-field>
@@ -156,6 +161,7 @@ export class EmployeeFormPageComponent {
     email: ['', [Validators.email]],
     address: [''],
     department: [''],
+    office_code: [''],
     office_name: ['', [Validators.required]],
     job_title: ['', [Validators.required]],
     employment_date: [''],
@@ -194,6 +200,7 @@ export class EmployeeFormPageComponent {
       email: value.email || null,
       address: value.address || null,
       department: value.department || officeName,
+      office_code: value.office_code || null,
       office_name: officeName,
       employment_date: value.employment_date || null,
       retirement_date: value.retirement_date || null,
@@ -247,6 +254,7 @@ export class EmployeeFormPageComponent {
       email: employee.email ?? '',
       address: employee.address ?? '',
       department: employee.department,
+      office_code: employee.office_code ?? '',
       office_name: employee.office_name ?? employee.department,
       job_title: employee.job_title,
       employment_date: employee.employment_date ?? '',

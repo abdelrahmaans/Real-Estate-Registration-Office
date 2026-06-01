@@ -1,22 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { EmployeeService } from '../../services/employee.service';
+import {
+  EmployeeFilterOptions,
+  EmployeeFilters,
+  EmployeeService,
+} from '../../services/employee.service';
 import { Employee } from '../../models/employee.model';
 
-type MetricCard = {
-  label: string;
-  value: string;
-  hint: string;
-  accent: string;
-};
-
-type QuickAction = {
-  title: string;
-  description: string;
-  icon: string;
-  link: string;
-};
+type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
 
 @Component({
   selector: 'app-employee-management-page',
@@ -24,152 +16,157 @@ type QuickAction = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page-shell" dir="rtl">
-      <div class="ambient ambient--one"></div>
-      <div class="ambient ambient--two"></div>
-
-      <header class="hero panel">
-        <div class="hero__copy">
+      <header class="admin-header">
+        <div>
           <p class="eyebrow">إدارة الموظفين</p>
-          <h1>واجهة واضحة وسريعة لإدارة ملفات الفريق والعمليات اليومية</h1>
-          <p class="summary">
-            تصميم عملي يركز على الرؤية السريعة، تنظيم البيانات، والوصول المباشر لأهم الإجراءات.
-          </p>
-
-          <div class="hero__actions">
-            <a class="action-primary" routerLink="/employees/new">
-              <mat-icon>person_add_alt_1</mat-icon>
-              إضافة موظف
-            </a>
-            <a class="action-secondary" routerLink="/dashboard">
-              <mat-icon>dashboard</mat-icon>
-              العودة للوحة التحكم
-            </a>
-          </div>
+          <h1>سجل العاملين 2026</h1>
+          <p class="summary">بحث وفلترة وتعديل مباشر على بيانات الموظفين المتصلة بقاعدة بيانات Supabase.</p>
         </div>
 
-        <div class="hero__stats">
-          @for (metric of metrics(); track metric.label) {
-            <article class="metric-card" [style.--metric-accent]="metric.accent">
-              <p class="metric-card__value">{{ metric.value }}</p>
-              <p class="metric-card__label">{{ metric.label }}</p>
-              <p class="metric-card__hint">{{ metric.hint }}</p>
-            </article>
-          }
-        </div>
+        <a class="action-primary" routerLink="/employees/new">
+          <mat-icon>person_add_alt_1</mat-icon>
+          إضافة موظف
+        </a>
       </header>
 
-      <section class="layout-grid">
-        <article class="panel panel--wide">
-          <div class="section-head">
-            <div>
-              <p class="section-kicker">اختصارات</p>
-              <h2>أقسام تشغيلية جاهزة للتوسع</h2>
-            </div>
-            <p class="section-copy">كل بطاقة هنا تمثل نقطة دخول سريعة يمكن ربطها لاحقاً بصفحات CRUD الفعلية.</p>
-          </div>
-
-          <div class="quick-actions">
-            @for (action of quickActions; track action.title) {
-              <a class="action-card" [routerLink]="action.link">
-                <span class="action-card__icon">
-                  <mat-icon>{{ action.icon }}</mat-icon>
-                </span>
-                <span class="action-card__body">
-                  <strong>{{ action.title }}</strong>
-                  <span>{{ action.description }}</span>
-                </span>
-                <mat-icon class="action-card__chevron">chevron_left</mat-icon>
-              </a>
-            }
-          </div>
+      <section class="metrics-strip" aria-label="ملخص الموظفين">
+        <article class="metric-card">
+          <span class="metric-card__label">إجمالي النتائج</span>
+          <strong>{{ employees().length }}</strong>
         </article>
+        <article class="metric-card">
+          <span class="metric-card__label">نشط</span>
+          <strong>{{ activeCount() }}</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-card__label">مكاتب ظاهرة</span>
+          <strong>{{ visibleOfficeCount() }}</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-card__label">آخر تحديث</span>
+          <strong>{{ lastUpdatedLabel() }}</strong>
+        </article>
+      </section>
 
-        <article class="panel panel--stack">
-          <div class="section-head section-head--compact">
-            <div>
-              <p class="section-kicker">بحث مباشر</p>
-              <h2>ابحث عن موظف</h2>
-            </div>
-          </div>
-
-          <label class="search-box">
+      <section class="filters-panel" aria-label="فلاتر الموظفين">
+        <label class="filter-field filter-field--wide">
+          <span>بحث عام</span>
+          <span class="input-shell">
             <mat-icon>search</mat-icon>
             <input
-              [value]="searchTerm()"
-              (input)="onSearch($any($event.target).value)"
-              placeholder="ابحث بالاسم أو الكود أو المكتب أو رقم الهاتف"
+              [value]="filters().search ?? ''"
+              (input)="updateTextFilter('search', $event)"
+              placeholder="الاسم، الكود، الهاتف، الوظيفة، المكتب"
             />
-          </label>
+          </span>
+        </label>
 
-          <p class="result-count">عدد النتائج: {{ employees().length }}</p>
+        <label class="filter-field">
+          <span>المكتب / المأمورية</span>
+          <select [value]="filters().officeCode ?? 'all'" (change)="updateTextFilter('officeCode', $event)">
+            <option value="all">كل المكاتب</option>
+            @for (office of filterOptions().offices; track office.code) {
+              <option [value]="office.code">{{ office.name }}</option>
+            }
+          </select>
+        </label>
 
-          @if (error()) {
-            <p class="state state--error">{{ error() }}</p>
-          }
+        <label class="filter-field">
+          <span>الوظيفة</span>
+          <select [value]="filters().jobTitle ?? 'all'" (change)="updateTextFilter('jobTitle', $event)">
+            <option value="all">كل الوظائف</option>
+            @for (jobTitle of filterOptions().jobTitles; track jobTitle) {
+              <option [value]="jobTitle">{{ jobTitle }}</option>
+            }
+          </select>
+        </label>
 
-          @if (loading()) {
-            <p class="state">جاري تحميل الموظفين...</p>
-          }
-        </article>
+        <label class="filter-field">
+          <span>الحالة</span>
+          <select [value]="filters().status ?? 'all'" (change)="updateTextFilter('status', $event)">
+            <option value="all">كل الحالات</option>
+            <option value="active">نشط</option>
+            <option value="retired">متقاعد</option>
+            <option value="resigned">مستقيل</option>
+          </select>
+        </label>
 
-        <article class="panel panel--wide panel--accent">
-          <div class="section-head">
-            <div>
-              <p class="section-kicker">سجلات الموظفين</p>
-              <h2>قائمة الموظفين الفعلية</h2>
-            </div>
+        <button class="action-secondary" type="button" (click)="resetFilters()">
+          <mat-icon>restart_alt</mat-icon>
+          تصفير
+        </button>
+      </section>
+
+      @if (error()) {
+        <p class="state state--error">{{ error() }}</p>
+      }
+
+      <section class="table-panel" aria-label="جدول الموظفين">
+        <div class="table-toolbar">
+          <div>
+            <p class="section-kicker">البيانات المباشرة</p>
+            <h2>قائمة الموظفين</h2>
           </div>
-
-          @if (employees().length === 0 && !loading()) {
-            <p class="state">لا توجد بيانات موظفين حالياً. ابدأ بإضافة موظف جديد.</p>
+          @if (loading()) {
+            <span class="loading-pill">جاري التحديث...</span>
           } @else {
-            <div class="employee-table-wrap">
-              <table class="employee-table">
-                <thead>
-                  <tr>
-                    <th>صورة</th>
-                    <th>الرقم الوظيفي</th>
-                    <th>الاسم</th>
-                    <th>المكتب / المأمورية</th>
-                    <th>المسمى</th>
-                    <th>رقم الهاتف</th>
-                    <th>الحالة</th>
-                    <th>إجراءات</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (employee of employees(); track employee.id) {
-                    <tr>
-                      <td class="avatar-cell">
-                        <div class="avatar">
-                          @if (employee.profile_image_url) {
-                            <img [src]="employee.profile_image_url" [alt]="employee.full_name" />
-                          } @else {
-                            <span>{{ employee.full_name.charAt(0) }}</span>
-                          }
-                        </div>
-                      </td>
-                      <td>{{ employee.employee_id }}</td>
-                      <td>{{ employee.full_name }}</td>
-                      <td>{{ employee.office_name || employee.department }}</td>
-                      <td>{{ employee.job_title }}</td>
-                      <td>{{ employee.mobile_number }}</td>
-                      <td>
-                        <span class="status-chip" [class]="'status-chip status-chip--' + employee.employment_status">
-                          {{ statusLabel(employee.employment_status) }}
-                        </span>
-                      </td>
-                      <td class="actions-cell">
-                        <a class="btn-edit" [routerLink]="['/employees/profile', employee.id]">تعديل</a>
-                        <button class="btn-delete" type="button" (click)="deleteEmployee(employee.id)">حذف</button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+            <span class="loading-pill loading-pill--ready">متصل بالباك</span>
           }
-        </article>
+        </div>
+
+        @if (employees().length === 0 && !loading()) {
+          <p class="state">لا توجد نتائج مطابقة للفلاتر الحالية.</p>
+        } @else {
+          <div class="employee-table-wrap">
+            <table class="employee-table">
+              <thead>
+                <tr>
+                  <th>الموظف</th>
+                  <th>الكود</th>
+                  <th>المكتب / المأمورية</th>
+                  <th>الوظيفة</th>
+                  <th>الهاتف</th>
+                  <th>ملاحظات</th>
+                  <th>الحالة</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (employee of employees(); track employee.id) {
+                  <tr>
+                    <td>
+                      <div class="employee-cell">
+                        <span class="avatar">{{ employee.full_name.charAt(0) }}</span>
+                        <span>
+                          <strong>{{ employee.full_name }}</strong>
+                          <small>{{ employee.source_document || 'سجل يدوي' }}</small>
+                        </span>
+                      </div>
+                    </td>
+                    <td>{{ employee.employee_id }}</td>
+                    <td>{{ employee.office_name || employee.department }}</td>
+                    <td>{{ employee.job_title }}</td>
+                    <td dir="ltr">{{ employee.mobile_number }}</td>
+                    <td class="notes-cell">{{ employee.notes || '-' }}</td>
+                    <td>
+                      <span class="status-chip" [class]="'status-chip status-chip--' + employee.employment_status">
+                        {{ statusLabel(employee.employment_status) }}
+                      </span>
+                    </td>
+                    <td class="actions-cell">
+                      <a class="icon-action" [routerLink]="['/employees/profile', employee.id]" aria-label="تعديل الموظف">
+                        <mat-icon>edit</mat-icon>
+                      </a>
+                      <button class="icon-action icon-action--danger" type="button" (click)="deleteEmployee(employee.id)" aria-label="حذف الموظف">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </section>
     </section>
   `,
@@ -179,72 +176,41 @@ export class EmployeeManagementPageComponent {
   private readonly employeeService = inject(EmployeeService);
 
   readonly employees = signal<Employee[]>([]);
-  readonly searchTerm = signal('');
+  readonly filters = signal<EmployeeFilters>({ search: '', officeCode: 'all', status: 'all', jobTitle: 'all' });
+  readonly filterOptions = signal<EmployeeFilterOptions>({ offices: [], jobTitles: [] });
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly lastUpdated = signal<Date | null>(null);
 
-  readonly metrics = computed<MetricCard[]>(() => {
-    const items = this.employees();
-    const activeCount = items.filter((item) => item.employment_status === 'active').length;
-    const retiredCount = items.filter((item) => item.employment_status === 'retired').length;
-    const resignedCount = items.filter((item) => item.employment_status === 'resigned').length;
-
-    return [
-      {
-        label: 'الموظفون النشطون',
-        value: String(activeCount),
-        hint: 'إجمالي الموظفين بالحالة النشطة',
-        accent: '#38bdf8',
-      },
-      {
-        label: 'المتقاعدون',
-        value: String(retiredCount),
-        hint: 'موظفون تم إنهاء الخدمة بالتقاعد',
-        accent: '#f59e0b',
-      },
-      {
-        label: 'المستقيلون',
-        value: String(resignedCount),
-        hint: 'سجلات ترك الخدمة بالاستقالة',
-        accent: '#22c55e',
-      },
-    ];
+  readonly activeCount = computed(() =>
+    this.employees().filter((employee) => employee.employment_status === 'active').length
+  );
+  readonly visibleOfficeCount = computed(() => {
+    const offices = new Set(this.employees().map((employee) => employee.office_code || employee.office_name));
+    offices.delete(null);
+    offices.delete('');
+    return offices.size;
+  });
+  readonly lastUpdatedLabel = computed(() => {
+    const value = this.lastUpdated();
+    if (!value) return '-';
+    return value.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
   });
 
-  readonly quickActions: QuickAction[] = [
-    {
-      title: 'إضافة موظف جديد',
-      description: 'بدء نموذج الإضافة مع بيانات التوظيف الأساسية.',
-      icon: 'person_add',
-      link: '/employees/new',
-    },
-    {
-      title: 'عرض الملف الوظيفي',
-      description: 'اختيار موظف من القائمة ثم فتح صفحة التعديل.',
-      icon: 'badge',
-      link: '/employees',
-    },
-    {
-      title: 'مراجعة الطلبات',
-      description: 'متابعة الموافقات والتعديلات والطلبات الداخلية.',
-      icon: 'task_alt',
-      link: '/employees/requests',
-    },
-    {
-      title: 'أرشيف السجلات',
-      description: 'الوصول السريع إلى الملفات المؤرشفة والقديمة.',
-      icon: 'archive',
-      link: '/employees/archive',
-    },
-  ];
-
   constructor() {
+    this.loadFilterOptions();
     this.loadEmployees();
   }
 
-  async onSearch(value: string): Promise<void> {
-    this.searchTerm.set(value);
-    await this.loadEmployees();
+  updateTextFilter(key: keyof EmployeeFilters, event: Event): void {
+    const value = (event as FilterEvent).target.value;
+    this.filters.update((current) => ({ ...current, [key]: value }));
+    this.loadEmployees();
+  }
+
+  resetFilters(): void {
+    this.filters.set({ search: '', officeCode: 'all', status: 'all', jobTitle: 'all' });
+    this.loadEmployees();
   }
 
   async deleteEmployee(id: string): Promise<void> {
@@ -262,11 +228,17 @@ export class EmployeeManagementPageComponent {
     await this.loadEmployees();
   }
 
+  statusLabel(status: Employee['employment_status']): string {
+    if (status === 'active') return 'نشط';
+    if (status === 'retired') return 'متقاعد';
+    return 'مستقيل';
+  }
+
   private async loadEmployees(): Promise<void> {
     this.loading.set(true);
     this.error.set(null);
 
-    const response = await this.employeeService.listEmployees(this.searchTerm());
+    const response = await this.employeeService.listEmployees(this.filters());
     this.loading.set(false);
 
     if (response.error) {
@@ -276,17 +248,16 @@ export class EmployeeManagementPageComponent {
     }
 
     this.employees.set(response.data);
+    this.lastUpdated.set(new Date());
   }
 
-  statusLabel(status: Employee['employment_status']): string {
-    if (status === 'active') {
-      return 'نشط';
+  private async loadFilterOptions(): Promise<void> {
+    const response = await this.employeeService.getFilterOptions();
+    if (response.error) {
+      this.error.set(response.error);
+      return;
     }
 
-    if (status === 'retired') {
-      return 'متقاعد';
-    }
-
-    return 'مستقيل';
+    this.filterOptions.set(response.data);
   }
 }

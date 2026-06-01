@@ -10,6 +10,7 @@ export interface Employee {
     email: string | null;
     address: string | null;
     department: string;
+    office_code: string | null;
     office_name: string | null;
     job_title: string;
     employment_date: string | null;
