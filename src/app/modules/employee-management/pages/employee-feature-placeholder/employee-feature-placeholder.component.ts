@@ -51,5 +51,6 @@ export class EmployeeFeaturePlaceholderComponent {
     readonly title = this.data.title ?? 'صفحة داخلية قيد التجهيز';
     readonly icon = this.data.icon ?? 'construction';
     readonly subtitle = this.data.subtitle ?? 'تم إعداد المسار والبنية الأولية بنجاح.';
-    readonly summary = this.data.summary ?? 'سيتم استكمال هذه الصفحة لاحقًا كجزء من موديول إدارة الموظفين.';
+    readonly summary =
+        this.data.summary ?? 'سيتم استكمال هذه الصفحة لاحقا كجزء من موديول إدارة الموظفين.';
 }

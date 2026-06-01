@@ -2,6 +2,8 @@
 
 This document contains all SQL commands to set up your Supabase PostgreSQL database for the Real Estate Registration Office Management System.
 
+> Latest employee roster updates are maintained in `SUPABASE_IMPORT_EMPLOYEES_2026.sql`. Run that import after this base schema to add the 2026 office fields and employee records.
+
 ## Steps to Execute
 
 1. Open your Supabase dashboard
