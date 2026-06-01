@@ -3,6 +3,7 @@ import { SupabaseService } from '@core/services/supabase.service';
 import { Employee, EmployeeCreatePayload } from '../models/employee.model';
 
 type EmployeeInsert = EmployeeCreatePayload & { created_by?: string | null };
+type EmployeeRowPayload = Record<string, unknown>;
 
 @Injectable({
     providedIn: 'root',
@@ -16,12 +17,14 @@ export class EmployeeService {
                 .from('employees')
                 .select('*')
                 .is('deleted_at', null)
+                .order('office_sort_order', { ascending: true, nullsFirst: false })
+                .order('office_employee_order', { ascending: true, nullsFirst: false })
                 .order('created_at', { ascending: false });
 
             const normalizedSearch = search.trim();
             if (normalizedSearch.length > 0) {
                 query = query.or(
-                    `full_name.ilike.%${normalizedSearch}%,employee_id.ilike.%${normalizedSearch}%,national_id.ilike.%${normalizedSearch}%`
+                    `full_name.ilike.%${normalizedSearch}%,employee_id.ilike.%${normalizedSearch}%,national_id.ilike.%${normalizedSearch}%,office_name.ilike.%${normalizedSearch}%,mobile_number.ilike.%${normalizedSearch}%`
                 );
             }
 
@@ -31,7 +34,7 @@ export class EmployeeService {
             }
 
             return { data: (data ?? []) as Employee[], error: null };
-        } catch (error) {
+        } catch (_error) {
             return { data: [], error: 'تعذر تحميل الموظفين.' };
         }
     }
@@ -57,19 +60,22 @@ export class EmployeeService {
 
     async createEmployee(payload: EmployeeCreatePayload): Promise<{ data: Employee | null; error: string | null }> {
         try {
-            // Prepare insert payload and attach created_by from authenticated user when possible
             const insertPayload: EmployeeInsert = { ...payload };
             try {
                 const userResp = await this.supabase.auth.getUser();
-                const user = (userResp?.data as any)?.user;
+                const user = userResp?.data?.user;
                 if (user && !insertPayload.created_by) {
                     insertPayload.created_by = user.id;
                 }
-            } catch (e) {
-                // ignore: if we can't get user, rely on JWT/policy
+            } catch {
+                // If the user cannot be resolved, rely on the current JWT/RLS context.
             }
 
-            const { data, error } = await this.supabase.from('employees').insert([insertPayload as any]).select().single();
+            const { data, error } = await this.supabase
+                .from('employees')
+                .insert([insertPayload as EmployeeRowPayload])
+                .select()
+                .single();
 
             if (error) {
                 return { data: null, error: error.message };

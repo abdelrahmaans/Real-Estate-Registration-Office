@@ -1,19 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatIconModule } from '@angular/material/icon';
-import { EmployeeService } from '../../services/employee.service';
 import { Employee, EmploymentStatus } from '../../models/employee.model';
+import { EmployeeService } from '../../services/employee.service';
 
 @Component({
   selector: 'app-employee-form-page',
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,
@@ -46,7 +44,7 @@ import { Employee, EmploymentStatus } from '../../models/employee.model';
         } @else {
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="employee-form">
             <mat-form-field appearance="outline">
-              <mat-label>الرقم الوظيفي</mat-label>
+              <mat-label>الكود الوظيفي</mat-label>
               <input matInput formControlName="employee_id" />
             </mat-form-field>
 
@@ -56,28 +54,28 @@ import { Employee, EmploymentStatus } from '../../models/employee.model';
             </mat-form-field>
 
             <mat-form-field appearance="outline">
+              <mat-label>المكتب / المأمورية</mat-label>
+              <input matInput formControlName="office_name" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>الوظيفة</mat-label>
+              <input matInput formControlName="job_title" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>رقم الهاتف</mat-label>
+              <input matInput formControlName="mobile_number" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
               <mat-label>الرقم القومي</mat-label>
               <input matInput formControlName="national_id" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
-              <mat-label>رقم الجوال</mat-label>
-              <input matInput formControlName="mobile_number" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
               <mat-label>البريد الإلكتروني</mat-label>
               <input matInput formControlName="email" type="email" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>القسم</mat-label>
-              <input matInput formControlName="department" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>المسمى الوظيفي</mat-label>
-              <input matInput formControlName="job_title" />
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -92,6 +90,11 @@ import { Employee, EmploymentStatus } from '../../models/employee.model';
                 <mat-option value="retired">متقاعد</mat-option>
                 <mat-option value="resigned">مستقيل</mat-option>
               </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>رقم داخلي / بديل</mat-label>
+              <input matInput formControlName="secondary_phone" />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full">
@@ -140,25 +143,29 @@ export class EmployeeFormPageComponent {
   readonly pageSubtitle = computed(() =>
     this.employeeId()
       ? 'تحديث بيانات الموظف وربطها مباشرة بقاعدة البيانات.'
-      : 'إدخال سجل موظف جديد بصيغة واضحة ومنظمة.'
+      : 'إدخال سجل موظف جديد ببيانات واضحة ومنظمة.'
   );
   readonly submitLabel = computed(() => (this.employeeId() ? 'حفظ التعديلات' : 'إنشاء الموظف'));
 
   form = this.fb.nonNullable.group({
     employee_id: ['', [Validators.required]],
     full_name: ['', [Validators.required]],
-    national_id: ['', [Validators.required]],
+    national_id: [''],
     mobile_number: ['', [Validators.required]],
     secondary_phone: [''],
-    email: ['', [Validators.required, Validators.email]],
+    email: ['', [Validators.email]],
     address: [''],
-    department: ['', [Validators.required]],
+    department: [''],
+    office_name: ['', [Validators.required]],
     job_title: ['', [Validators.required]],
-    employment_date: ['', [Validators.required]],
+    employment_date: [''],
     retirement_date: [''],
     employment_status: this.fb.nonNullable.control<EmploymentStatus>('active'),
     notes: [''],
     profile_image_url: [''],
+    office_sort_order: this.fb.control<number | null>(null),
+    office_employee_order: this.fb.control<number | null>(null),
+    source_document: [''],
   });
 
   constructor() {
@@ -179,13 +186,21 @@ export class EmployeeFormPageComponent {
     this.submitting.set(true);
 
     const value = this.form.getRawValue();
+    const officeName = value.office_name.trim();
     const payload = {
       ...value,
+      national_id: value.national_id || null,
       secondary_phone: value.secondary_phone || null,
+      email: value.email || null,
       address: value.address || null,
+      department: value.department || officeName,
+      office_name: officeName,
+      employment_date: value.employment_date || null,
       retirement_date: value.retirement_date || null,
       notes: value.notes || null,
       profile_image_url: value.profile_image_url || null,
+      source_document: value.source_document || null,
+      imported_at: null,
     };
 
     const id = this.employeeId();
@@ -226,18 +241,22 @@ export class EmployeeFormPageComponent {
     this.form.patchValue({
       employee_id: employee.employee_id,
       full_name: employee.full_name,
-      national_id: employee.national_id,
+      national_id: employee.national_id ?? '',
       mobile_number: employee.mobile_number,
       secondary_phone: employee.secondary_phone ?? '',
-      email: employee.email,
+      email: employee.email ?? '',
       address: employee.address ?? '',
       department: employee.department,
+      office_name: employee.office_name ?? employee.department,
       job_title: employee.job_title,
-      employment_date: employee.employment_date,
+      employment_date: employee.employment_date ?? '',
       retirement_date: employee.retirement_date ?? '',
       employment_status: employee.employment_status,
       notes: employee.notes ?? '',
       profile_image_url: employee.profile_image_url ?? '',
+      office_sort_order: employee.office_sort_order,
+      office_employee_order: employee.office_employee_order,
+      source_document: employee.source_document ?? '',
     });
   }
 }

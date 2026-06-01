@@ -97,7 +97,7 @@ type QuickAction = {
             <input
               [value]="searchTerm()"
               (input)="onSearch($any($event.target).value)"
-              placeholder="ابحث بالاسم أو الرقم الوظيفي أو الرقم القومي"
+              placeholder="ابحث بالاسم أو الكود أو المكتب أو رقم الهاتف"
             />
           </label>
 
@@ -130,8 +130,9 @@ type QuickAction = {
                     <th>صورة</th>
                     <th>الرقم الوظيفي</th>
                     <th>الاسم</th>
-                    <th>القسم</th>
+                    <th>المكتب / المأمورية</th>
                     <th>المسمى</th>
+                    <th>رقم الهاتف</th>
                     <th>الحالة</th>
                     <th>إجراءات</th>
                   </tr>
@@ -150,8 +151,9 @@ type QuickAction = {
                       </td>
                       <td>{{ employee.employee_id }}</td>
                       <td>{{ employee.full_name }}</td>
-                      <td>{{ employee.department }}</td>
+                      <td>{{ employee.office_name || employee.department }}</td>
                       <td>{{ employee.job_title }}</td>
+                      <td>{{ employee.mobile_number }}</td>
                       <td>
                         <span class="status-chip" [class]="'status-chip status-chip--' + employee.employment_status">
                           {{ statusLabel(employee.employment_status) }}
