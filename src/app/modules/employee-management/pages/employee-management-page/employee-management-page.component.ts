@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { EmployeeService } from '../../services/employee.service';
@@ -21,7 +20,7 @@ type QuickAction = {
 
 @Component({
   selector: 'app-employee-management-page',
-  imports: [CommonModule, RouterLink, MatIconModule],
+  imports: [RouterLink, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page-shell" dir="rtl">
@@ -66,7 +65,7 @@ type QuickAction = {
               <p class="section-kicker">اختصارات</p>
               <h2>أقسام تشغيلية جاهزة للتوسع</h2>
             </div>
-            <p class="section-copy">كل بطاقة هنا تمثل نقطة دخول سريعة يمكن ربطها لاحقًا بصفحات CRUD الفعلية.</p>
+            <p class="section-copy">كل بطاقة هنا تمثل نقطة دخول سريعة يمكن ربطها لاحقاً بصفحات CRUD الفعلية.</p>
           </div>
 
           <div class="quick-actions">
@@ -142,8 +141,11 @@ type QuickAction = {
                     <tr>
                       <td class="avatar-cell">
                         <div class="avatar">
-                          <img *ngIf="employee.profile_image_url" src="{{ employee.profile_image_url }}" alt="{{ employee.full_name }}" />
-                          <span *ngIf="!employee.profile_image_url">{{ employee.full_name.charAt(0) }}</span>
+                          @if (employee.profile_image_url) {
+                            <img [src]="employee.profile_image_url" [alt]="employee.full_name" />
+                          } @else {
+                            <span>{{ employee.full_name.charAt(0) }}</span>
+                          }
                         </div>
                       </td>
                       <td>{{ employee.employee_id }}</td>

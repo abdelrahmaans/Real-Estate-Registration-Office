@@ -1,5 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
-import { RouterOutlet, Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 
 @Component({
@@ -25,7 +25,14 @@ import { AuthService } from '@core/services/auth.service';
             <span>المنصة جاهزة للعمل</span>
           </div>
 
-          <button class="topbar__theme-toggle" type="button" (click)="toggleTheme()" [attr.aria-pressed]="isDark()" [attr.aria-label]="isDark() ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'" title="تبديل الوضع">
+          <button
+            class="topbar__theme-toggle"
+            type="button"
+            (click)="toggleTheme()"
+            [attr.aria-pressed]="isDark()"
+            [attr.aria-label]="isDark() ? 'تفعيل الوضع الفاتح' : 'تفعيل الوضع الداكن'"
+            title="تبديل الوضع"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" [hidden]="isDark()">
               <circle cx="12" cy="12" r="4"></circle>
               <line x1="12" y1="2" x2="12" y2="4"></line>
@@ -42,7 +49,7 @@ import { AuthService } from '@core/services/auth.service';
             </svg>
           </button>
 
-          <button class="topbar__logout" type="button" (click)="onLogout()" title="تسجيل الخروج">
+          <button class="topbar__logout" type="button" (click)="onLogout()" title="تسجيل الخروج" aria-label="تسجيل الخروج">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
@@ -57,7 +64,8 @@ import { AuthService } from '@core/services/auth.service';
       </main>
     </div>
   `,
-  styleUrl: './app.css'
+  styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   private auth = inject(AuthService);

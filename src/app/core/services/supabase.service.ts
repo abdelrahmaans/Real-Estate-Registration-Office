@@ -6,6 +6,20 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '@environments/environment';
 
+type QueryOptions = {
+    select?: string;
+    limit?: number;
+    offset?: number;
+    orderBy?: string;
+    ascending?: boolean;
+};
+
+type FilterOption = {
+    column: string;
+    operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in';
+    value: unknown;
+};
+
 /**
  * Service for initializing and managing Supabase client
  * This is a singleton service that provides access to Supabase throughout the app
@@ -47,7 +61,7 @@ export class SupabaseService {
     /**
      * Get all records from a table
      */
-    async getAll(table: string, options?: any) {
+    async getAll(table: string, options?: QueryOptions) {
         try {
             let query = this.supabaseClient.from(table).select('*');
 
@@ -97,7 +111,7 @@ export class SupabaseService {
     /**
      * Insert record(s)
      */
-    async insert(table: string, payload: any) {
+    async insert(table: string, payload: Record<string, unknown>) {
         try {
             const { data, error } = await this.supabaseClient
                 .from(table)
@@ -114,7 +128,7 @@ export class SupabaseService {
     /**
      * Update record
      */
-    async update(table: string, id: string, payload: any) {
+    async update(table: string, id: string, payload: Record<string, unknown>) {
         try {
             const { data, error } = await this.supabaseClient
                 .from(table)
@@ -181,7 +195,7 @@ export class SupabaseService {
     /**
      * Filter records
      */
-    async filter(table: string, filters: Array<{ column: string; operator: string; value: any }>) {
+    async filter(table: string, filters: FilterOption[]) {
         try {
             let query = this.supabaseClient.from(table).select('*');
 
@@ -198,7 +212,7 @@ export class SupabaseService {
                     query = query.lt(filter.column, filter.value);
                 } else if (filter.operator === 'lte') {
                     query = query.lte(filter.column, filter.value);
-                } else if (filter.operator === 'in') {
+                } else if (filter.operator === 'in' && Array.isArray(filter.value)) {
                     query = query.in(filter.column, filter.value);
                 }
             }

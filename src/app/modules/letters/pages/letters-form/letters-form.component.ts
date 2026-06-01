@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,8 +9,7 @@ import { LetterCreatePayload } from '../../models/letter.model';
 
 @Component({
   selector: 'app-letters-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="form-shell" dir="rtl">
@@ -61,8 +59,13 @@ import { LetterCreatePayload } from '../../models/letter.model';
         </div>
       </form>
 
-      <p *ngIf="error()" class="error">{{ error() }}</p>
-      <p *ngIf="success()" class="success">{{ success() }}</p>
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      @if (success()) {
+        <p class="success">{{ success() }}</p>
+      }
     </section>
   `,
   styles: [
@@ -106,7 +109,7 @@ export class LettersFormComponent {
     status: ['new'],
   });
 
-  async onSubmit() {
+  async onSubmit(): Promise<void> {
     if (this.form.invalid) return;
     this.submitting.set(true);
     this.error.set(null);

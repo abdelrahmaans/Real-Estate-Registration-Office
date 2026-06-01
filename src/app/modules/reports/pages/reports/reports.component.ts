@@ -1,13 +1,14 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { EmployeeService } from '../../../employee-management/services/employee.service';
+import { Employee } from '../../../employee-management/models/employee.model';
+import { Letter } from '../../../letters/models/letter.model';
 import { LettersService } from '../../../letters/services/letters.service';
 
 @Component({
   selector: 'app-reports',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="reports-shell" dir="rtl">
       <div class="reports-header">
@@ -38,7 +39,7 @@ import { LettersService } from '../../../letters/services/letters.service';
         <article class="report-card">
           <p class="card-label">الخطابات الواردة</p>
           <p class="card-value">{{ incomingLetters() }}</p>
-          <p class="card-hint">الخطابات الموارد من الخارج</p>
+          <p class="card-hint">الخطابات الواردة من الخارج</p>
         </article>
 
         <article class="report-card">
@@ -55,7 +56,7 @@ import { LettersService } from '../../../letters/services/letters.service';
       </div>
 
       <div class="reports-actions">
-        <a class="btn-secondary" routerLink="/dashboard">العودة لوحة التحكم</a>
+        <a class="btn-secondary" routerLink="/dashboard">العودة للوحة التحكم</a>
       </div>
     </section>
   `,
@@ -83,20 +84,20 @@ export class ReportsComponent {
   private employeeSvc = inject(EmployeeService);
   private lettersSvc = inject(LettersService);
 
-  employees = signal<any[]>([]);
-  letters = signal<any[]>([]);
+  employees = signal<Employee[]>([]);
+  letters = signal<Letter[]>([]);
 
   totalEmployees = computed(() => this.employees().length);
   activeEmployees = computed(() =>
-    this.employees().filter(e => e.employment_status === 'active').length
+    this.employees().filter(employee => employee.employment_status === 'active').length
   );
 
   totalLetters = computed(() => this.letters().length);
   incomingLetters = computed(() =>
-    this.letters().filter(l => l.type === 'incoming').length
+    this.letters().filter(letter => letter.type === 'incoming').length
   );
   outgoingLetters = computed(() =>
-    this.letters().filter(l => l.type === 'outgoing').length
+    this.letters().filter(letter => letter.type === 'outgoing').length
   );
 
   responseRate = computed(() => {

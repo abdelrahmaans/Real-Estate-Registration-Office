@@ -1,9 +1,19 @@
 import { Routes } from '@angular/router';
-import { LettersListComponent } from './pages/letters-list/letters-list.component';
-import { LettersFormComponent } from './pages/letters-form/letters-form.component';
 
 export const lettersRoutes: Routes = [
-    { path: '', component: LettersListComponent },
-    { path: 'new', component: LettersFormComponent },
-    { path: ':id', component: LettersFormComponent },
+    {
+        path: '',
+        loadComponent: () =>
+            import('./pages/letters-list/letters-list.component').then(m => m.LettersListComponent),
+    },
+    {
+        path: 'new',
+        loadComponent: () =>
+            import('./pages/letters-form/letters-form.component').then(m => m.LettersFormComponent),
+    },
+    {
+        path: ':id',
+        loadComponent: () =>
+            import('./pages/letters-form/letters-form.component').then(m => m.LettersFormComponent),
+    },
 ];

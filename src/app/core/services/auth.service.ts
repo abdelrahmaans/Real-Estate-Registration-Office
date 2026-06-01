@@ -2,8 +2,9 @@
 // Authentication Service
 // ============================================
 
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { User } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 import {
     AuthState,
@@ -22,6 +23,10 @@ type AuthCacheEntry = {
 
 const AUTH_CACHE_KEY = 'registry.auth.cache';
 
+function getErrorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
+}
+
 /**
  * Service for handling user authentication and authorization
  * Manages login, logout, password reset, and session persistence
@@ -30,6 +35,9 @@ const AUTH_CACHE_KEY = 'registry.auth.cache';
     providedIn: 'root',
 })
 export class AuthService {
+    private readonly supabaseService = inject(SupabaseService);
+    private readonly router = inject(Router);
+
     // Reactive state management using signals
     private authState = signal<AuthState>({
         isAuthenticated: false,
@@ -47,7 +55,7 @@ export class AuthService {
     private authSubscription?: { unsubscribe: () => void };
     private initializationPromise: Promise<void>;
 
-    constructor(private supabaseService: SupabaseService, private router: Router) {
+    constructor() {
         this.initializationPromise = this.initializeAuth();
         this.listenToAuthChanges();
     }
@@ -148,8 +156,8 @@ export class AuthService {
             }
 
             return { success: false, error: 'Unknown error occurred' };
-        } catch (error: any) {
-            const errorMessage = error?.message || 'Login failed';
+        } catch (error: unknown) {
+            const errorMessage = getErrorMessage(error, 'Login failed');
             this.updateAuthState({ loading: false, error: errorMessage });
             return { success: false, error: errorMessage };
         }
@@ -200,8 +208,8 @@ export class AuthService {
             }
 
             return { success: true, error: null };
-        } catch (error: any) {
-            return { success: false, error: error?.message || 'Reset password failed' };
+        } catch (error: unknown) {
+            return { success: false, error: getErrorMessage(error, 'Reset password failed') };
         }
     }
 
@@ -223,8 +231,8 @@ export class AuthService {
             }
 
             return { success: true, error: null };
-        } catch (error: any) {
-            return { success: false, error: error?.message || 'Password reset failed' };
+        } catch (error: unknown) {
+            return { success: false, error: getErrorMessage(error, 'Password reset failed') };
         }
     }
 
@@ -267,21 +275,24 @@ export class AuthService {
     /**
      * Map Supabase user to our UserProfile interface
      */
-    private mapSupabaseUserToProfile(supabaseUser: any): UserProfile {
+    private mapSupabaseUserToProfile(supabaseUser: User): UserProfile {
+        const metadata = supabaseUser.user_metadata;
+        const now = new Date().toISOString();
+
         return {
             id: supabaseUser.id,
             email: supabaseUser.email || '',
-            fullName: supabaseUser.user_metadata?.fullName || supabaseUser.email || 'User',
-            phone: supabaseUser.user_metadata?.phone,
-            role: (supabaseUser.user_metadata?.role as UserRole) || UserRole.DATA_ENTRY,
-            department: supabaseUser.user_metadata?.department,
+            fullName: String(metadata?.['fullName'] || supabaseUser.email || 'User'),
+            phone: metadata?.['phone'] ? String(metadata['phone']) : undefined,
+            role: (metadata?.['role'] as UserRole | undefined) || UserRole.DATA_ENTRY,
+            department: metadata?.['department'] ? String(metadata['department']) : undefined,
             isActive: true,
-            createdAt: new Date(supabaseUser.created_at),
-            updatedAt: new Date(supabaseUser.updated_at),
+            createdAt: new Date(supabaseUser.created_at || now),
+            updatedAt: new Date(supabaseUser.updated_at || now),
         };
     }
 
-    private syncSessionState(user: any, accessToken: string, refreshToken: string): void {
+    private syncSessionState(user: User, accessToken: string, refreshToken: string): void {
         const profile = this.mapSupabaseUserToProfile(user);
 
         this.updateAuthState({

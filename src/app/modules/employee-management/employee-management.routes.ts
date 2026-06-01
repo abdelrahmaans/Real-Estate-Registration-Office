@@ -1,16 +1,19 @@
 import { Routes } from '@angular/router';
-import { EmployeeManagementPageComponent } from './pages/employee-management-page/employee-management-page.component';
-import { EmployeeFeaturePlaceholderComponent } from './pages/employee-feature-placeholder/employee-feature-placeholder.component';
-import { EmployeeFormPageComponent } from './pages/employee-form-page/employee-form-page.component';
 
 export const employeeManagementRoutes: Routes = [
     {
         path: '',
-        component: EmployeeManagementPageComponent,
+        loadComponent: () =>
+            import('./pages/employee-management-page/employee-management-page.component').then(
+                m => m.EmployeeManagementPageComponent
+            ),
     },
     {
         path: 'new',
-        component: EmployeeFormPageComponent,
+        loadComponent: () =>
+            import('./pages/employee-form-page/employee-form-page.component').then(
+                m => m.EmployeeFormPageComponent
+            ),
     },
     {
         path: 'profile',
@@ -19,11 +22,17 @@ export const employeeManagementRoutes: Routes = [
     },
     {
         path: 'profile/:id',
-        component: EmployeeFormPageComponent,
+        loadComponent: () =>
+            import('./pages/employee-form-page/employee-form-page.component').then(
+                m => m.EmployeeFormPageComponent
+            ),
     },
     {
         path: 'requests',
-        component: EmployeeFeaturePlaceholderComponent,
+        loadComponent: () =>
+            import('./pages/employee-feature-placeholder/employee-feature-placeholder.component').then(
+                m => m.EmployeeFeaturePlaceholderComponent
+            ),
         data: {
             title: 'طلبات الموظفين',
             icon: 'task_alt',
@@ -33,7 +42,10 @@ export const employeeManagementRoutes: Routes = [
     },
     {
         path: 'archive',
-        component: EmployeeFeaturePlaceholderComponent,
+        loadComponent: () =>
+            import('./pages/employee-feature-placeholder/employee-feature-placeholder.component').then(
+                m => m.EmployeeFeaturePlaceholderComponent
+            ),
         data: {
             title: 'أرشيف السجلات',
             icon: 'archive',

@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
 import { LettersService } from '../../services/letters.service';
@@ -7,8 +6,7 @@ import { Letter } from '../../models/letter.model';
 
 @Component({
   selector: 'app-letters-list',
-  standalone: true,
-  imports: [CommonModule, RouterModule, MatSelectModule],
+  imports: [RouterModule, MatSelectModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="letters-shell" dir="rtl">
@@ -59,8 +57,13 @@ import { Letter } from '../../models/letter.model';
         </table>
       </div>
 
-      <p *ngIf="error()" class="error">{{ error() }}</p>
-      <p *ngIf="!letters().length && !loading()" class="muted">لا توجد خطابات حالياً.</p>
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      @if (!letters().length && !loading()) {
+        <p class="muted">لا توجد خطابات حالياً.</p>
+      }
     </section>
   `,
   styles: [
@@ -101,7 +104,7 @@ export class LettersListComponent {
     this.load();
   }
 
-  async load() {
+  async load(): Promise<void> {
     this.loading.set(true);
     const res = await this.svc.list(this.filter());
     this.loading.set(false);
@@ -113,7 +116,7 @@ export class LettersListComponent {
     this.letters.set(res.data);
   }
 
-  async onChange(v: string) {
+  async onChange(v: string): Promise<void> {
     this.filter.set(v);
     await this.load();
   }

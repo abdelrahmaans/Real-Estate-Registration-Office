@@ -1,19 +1,16 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
@@ -22,6 +19,7 @@ import { AuthService } from '@core/services/auth.service';
     MatButtonModule,
     MatIconModule,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
       <section class="login-page" dir="rtl">
         <div class="login-card">
@@ -88,7 +86,7 @@ export class LoginComponent {
   loading = signal(false);
   error = signal('');
 
-  async onSubmit() {
+  async onSubmit(): Promise<void> {
     if (this.form.invalid) return;
     this.loading.set(true);
     this.error.set('');
@@ -105,8 +103,8 @@ export class LoginComponent {
       } else {
         this.error.set(result.error || 'فشل تسجيل الدخول');
       }
-    } catch (err: any) {
-      this.error.set(err?.message || 'فشل تسجيل الدخول');
+    } catch (err: unknown) {
+      this.error.set(err instanceof Error ? err.message : 'فشل تسجيل الدخول');
     } finally {
       this.loading.set(false);
     }

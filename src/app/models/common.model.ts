@@ -29,7 +29,7 @@ export interface ApiErrorResponse {
     statusCode: number;
     message: string;
     error?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
 }
 
 /**
@@ -87,8 +87,8 @@ export interface AuditLog {
     action: string;
     module: string;
     recordId: string;
-    oldValue?: Record<string, any>;
-    newValue?: Record<string, any>;
+    oldValue?: Record<string, unknown>;
+    newValue?: Record<string, unknown>;
     timestamp: Date;
     ipAddress?: string;
 }
