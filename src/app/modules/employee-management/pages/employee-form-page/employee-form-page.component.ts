@@ -32,7 +32,11 @@ import { EmployeeService } from '../../services/employee.service';
           </div>
 
           <div class="panel__actions">
-            <a mat-stroked-button routerLink="/employees">
+            <a class="nav-action" routerLink="/dashboard">
+              <mat-icon>dashboard</mat-icon>
+              الداشبورد
+            </a>
+            <a class="nav-action" routerLink="/employees">
               <mat-icon>arrow_forward</mat-icon>
               العودة للقائمة
             </a>
@@ -40,7 +44,7 @@ import { EmployeeService } from '../../services/employee.service';
         </header>
 
         @if (loading()) {
-          <p class="message">جاري تحميل البيانات...</p>
+          <p class="message"><mat-icon>sync</mat-icon> جاري تحميل البيانات...</p>
         } @else {
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="employee-form">
             <mat-form-field appearance="outline">
@@ -121,7 +125,8 @@ import { EmployeeService } from '../../services/employee.service';
             }
 
             <div class="form-actions">
-              <button mat-flat-button color="primary" type="submit" [disabled]="submitting() || form.invalid">
+              <button class="submit-action" type="submit" [disabled]="submitting() || form.invalid">
+                <mat-icon>save</mat-icon>
                 {{ submitLabel() }}
               </button>
             </div>
@@ -147,8 +152,8 @@ export class EmployeeFormPageComponent {
   readonly pageTitle = computed(() => (this.employeeId() ? 'تعديل ملف موظف' : 'إضافة موظف جديد'));
   readonly pageSubtitle = computed(() =>
     this.employeeId()
-      ? 'تحديث بيانات الموظف وربطها مباشرة بقاعدة البيانات.'
-      : 'إدخال سجل موظف جديد ببيانات واضحة ومنظمة.'
+      ? 'تحديث بيانات الموظف وحفظها مباشرة في قاعدة البيانات.'
+      : 'إنشاء سجل موظف جديد ببيانات واضحة وقابلة للفلترة.'
   );
   readonly submitLabel = computed(() => (this.employeeId() ? 'حفظ التعديلات' : 'إنشاء الموظف'));
 

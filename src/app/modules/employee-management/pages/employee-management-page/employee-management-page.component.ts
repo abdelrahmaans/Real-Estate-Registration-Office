@@ -23,26 +23,36 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
           <p class="summary">بحث وفلترة وتعديل مباشر على بيانات الموظفين المتصلة بقاعدة بيانات Supabase.</p>
         </div>
 
-        <a class="action-primary" routerLink="/employees/new">
-          <mat-icon>person_add_alt_1</mat-icon>
-          إضافة موظف
-        </a>
+        <div class="header-actions">
+          <a class="action-secondary" routerLink="/dashboard">
+            <mat-icon>dashboard</mat-icon>
+            الداشبورد
+          </a>
+          <a class="action-primary" routerLink="/employees/new">
+            <mat-icon>person_add_alt_1</mat-icon>
+            إضافة موظف
+          </a>
+        </div>
       </header>
 
       <section class="metrics-strip" aria-label="ملخص الموظفين">
         <article class="metric-card">
+          <span class="metric-card__icon metric-card__icon--blue"><mat-icon>groups</mat-icon></span>
           <span class="metric-card__label">إجمالي النتائج</span>
           <strong>{{ employees().length }}</strong>
         </article>
         <article class="metric-card">
+          <span class="metric-card__icon metric-card__icon--green"><mat-icon>verified_user</mat-icon></span>
           <span class="metric-card__label">نشط</span>
           <strong>{{ activeCount() }}</strong>
         </article>
         <article class="metric-card">
+          <span class="metric-card__icon metric-card__icon--cyan"><mat-icon>business</mat-icon></span>
           <span class="metric-card__label">مكاتب ظاهرة</span>
           <strong>{{ visibleOfficeCount() }}</strong>
         </article>
         <article class="metric-card">
+          <span class="metric-card__icon metric-card__icon--amber"><mat-icon>sync</mat-icon></span>
           <span class="metric-card__label">آخر تحديث</span>
           <strong>{{ lastUpdatedLabel() }}</strong>
         </article>
@@ -52,7 +62,7 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
         <label class="filter-field filter-field--wide">
           <span>بحث عام</span>
           <span class="input-shell">
-            <mat-icon>search</mat-icon>
+            <mat-icon>manage_search</mat-icon>
             <input
               [value]="filters().search ?? ''"
               (input)="updateTextFilter('search', $event)"
@@ -108,9 +118,9 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
             <h2>قائمة الموظفين</h2>
           </div>
           @if (loading()) {
-            <span class="loading-pill">جاري التحديث...</span>
+            <span class="loading-pill"><mat-icon>sync</mat-icon> جاري التحديث...</span>
           } @else {
-            <span class="loading-pill loading-pill--ready">متصل بالباك</span>
+            <span class="loading-pill loading-pill--ready"><mat-icon>cloud_done</mat-icon> متصل بالباك</span>
           }
         </div>
 
@@ -155,7 +165,7 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
                     </td>
                     <td class="actions-cell">
                       <a class="icon-action" [routerLink]="['/employees/profile', employee.id]" aria-label="تعديل الموظف">
-                        <mat-icon>edit</mat-icon>
+                        <mat-icon>edit_square</mat-icon>
                       </a>
                       <button class="icon-action icon-action--danger" type="button" (click)="deleteEmployee(employee.id)" aria-label="حذف الموظف">
                         <mat-icon>delete</mat-icon>
