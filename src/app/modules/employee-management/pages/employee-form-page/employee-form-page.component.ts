@@ -34,7 +34,7 @@ import { EmployeeService } from '../../services/employee.service';
           <div class="panel__actions">
             <a class="nav-action" routerLink="/dashboard">
               <mat-icon>dashboard</mat-icon>
-              الداشبورد
+              القائمة الرئيسية
             </a>
             <a class="nav-action" routerLink="/employees">
               <mat-icon>arrow_forward</mat-icon>

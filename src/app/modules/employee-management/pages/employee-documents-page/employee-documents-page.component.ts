@@ -30,7 +30,7 @@ type FileInputEvent = Event & { target: HTMLInputElement };
         <div class="header-actions">
           <a class="action-secondary" routerLink="/dashboard">
             <mat-icon>dashboard</mat-icon>
-            الداشبورد
+            القائمة الرئيسية
           </a>
           <a class="action-secondary" routerLink="/employees">
             <mat-icon>arrow_forward</mat-icon>
@@ -251,10 +251,47 @@ export class EmployeeDocumentsPageComponent {
     async printDocument(document: EmployeeDocument): Promise<void> {
         const url = await this.getDocumentUrl(document.file_path);
         if (!url) return;
-        const popup = window.open(url, '_blank', 'noopener,noreferrer');
+
+        const popup = window.open('', '_blank', 'noopener,noreferrer');
         if (!popup) {
-            this.error.set('افتح الملف ثم اطبعه من المتصفح. المتصفح منع نافذة الطباعة.');
+            this.error.set('المتصفح منع نافذة الطباعة. افتح الملف ثم اطبعه من المتصفح.');
+            return;
         }
+
+        const title = this.escapeHtml(document.title);
+        const employeeName = this.escapeHtml(this.employee()?.full_name ?? 'ملف موظف');
+        const fileUrl = this.escapeHtml(url);
+
+        popup.document.write(`
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>${title}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; color: #111827; background: #f8fafc; }
+    header { padding: 14px 18px; background: #fff; border-bottom: 1px solid #e5e7eb; }
+    h1 { margin: 0 0 6px; font-size: 18px; }
+    p { margin: 0; color: #475569; }
+    iframe { display: block; width: 100%; height: calc(100vh - 74px); border: 0; background: #fff; }
+    @media print {
+      header { display: none; }
+      iframe { height: 100vh; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>${title}</h1>
+    <p>${employeeName}</p>
+  </header>
+  <iframe src="${fileUrl}" title="${title}" onload="setTimeout(function(){ window.focus(); window.print(); }, 500)"></iframe>
+</body>
+</html>
+`);
+        popup.document.close();
     }
 
     async deleteDocument(id: string): Promise<void> {
@@ -328,5 +365,14 @@ export class EmployeeDocumentsPageComponent {
             return null;
         }
         return response.data;
+    }
+
+    private escapeHtml(value: string): string {
+        return value
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
     }
 }

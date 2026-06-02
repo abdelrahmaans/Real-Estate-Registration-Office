@@ -26,7 +26,7 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
         <div class="header-actions">
           <a class="action-secondary" routerLink="/dashboard">
             <mat-icon>dashboard</mat-icon>
-            الداشبورد
+            القائمة الرئيسية
           </a>
           <a class="action-primary" routerLink="/employees/new">
             <mat-icon>person_add_alt_1</mat-icon>
@@ -120,7 +120,7 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
           @if (loading()) {
             <span class="loading-pill"><mat-icon>sync</mat-icon> جاري التحديث...</span>
           } @else {
-            <span class="loading-pill loading-pill--ready"><mat-icon>cloud_done</mat-icon> متصل بالباك</span>
+            <span class="loading-pill loading-pill--ready"><mat-icon>cloud_done</mat-icon> محدث</span>
           }
         </div>
 
@@ -135,7 +135,6 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
                   <th>الكود</th>
                   <th>المكتب / المأمورية</th>
                   <th>الوظيفة</th>
-                  <th>الهاتف</th>
                   <th>ملاحظات</th>
                   <th>الحالة</th>
                   <th>إجراءات</th>
@@ -155,8 +154,12 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
                     </td>
                     <td>{{ employee.employee_id }}</td>
                     <td>{{ employee.office_name || employee.department }}</td>
-                    <td>{{ employee.job_title }}</td>
-                    <td dir="ltr">{{ employee.mobile_number }}</td>
+                    <td>
+                      <span class="job-cell">
+                        <strong>{{ employee.job_title }}</strong>
+                        <small dir="ltr">{{ employee.mobile_number }}</small>
+                      </span>
+                    </td>
                     <td class="notes-cell">{{ employee.notes || '-' }}</td>
                     <td>
                       <span class="status-chip" [class]="'status-chip status-chip--' + employee.employment_status">

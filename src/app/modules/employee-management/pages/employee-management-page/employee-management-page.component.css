@@ -283,6 +283,17 @@ h2 {
     white-space: normal;
 }
 
+.job-cell {
+    display: grid;
+    gap: 4px;
+    min-width: 150px;
+}
+
+.job-cell small {
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
 .status-chip {
     display: inline-flex;
     justify-content: center;
