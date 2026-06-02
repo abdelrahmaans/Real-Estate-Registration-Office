@@ -40,6 +40,12 @@ import { EmployeeService } from '../../services/employee.service';
               <mat-icon>arrow_forward</mat-icon>
               العودة للقائمة
             </a>
+            @if (employeeId()) {
+              <a class="nav-action" [routerLink]="['/employees/profile', employeeId(), 'documents']">
+                <mat-icon>folder_open</mat-icon>
+                ملفات الموظف
+              </a>
+            }
           </div>
         </header>
 

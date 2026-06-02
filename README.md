@@ -10,8 +10,10 @@
 - تسجيل الدخول وحماية المسارات عن طريق Supabase Auth.
 - لوحة تحكم رئيسية للوصول السريع إلى الموظفين، الخطابات، والتقارير.
 - إدارة الموظفين مربوطة مباشرة بجدول `employees` في Supabase.
+- قسم ملفات الموظف مربوط بجدول `employee_documents` و Supabase Storage.
 - البحث والفلترة في الموظفين حسب الاسم، كود الموظف، رقم الهاتف، المكتب، الوظيفة، والحالة.
 - إضافة وتعديل بيانات الموظفين من الواجهة مع حفظ التغيير في الباك اند.
+- رفع أوراق الموظف مثل الإجازات وقرارات التعيين والتقارير الطبية، ثم فتحها وطباعتها من المتصفح.
 - حذف الموظفين يتم كـ soft delete عن طريق حقل `deleted_at`.
 - Dark / Night mode مضبوط لصفحات الموظفين والنماذج.
 - أزرار رجوع واضحة من صفحات الموظفين إلى لوحة التحكم وقائمة الموظفين.
@@ -55,6 +57,7 @@ npm test
 - `/employees`: قائمة الموظفين والبحث والفلترة.
 - `/employees/new`: إضافة موظف.
 - `/employees/profile/:id`: تعديل بيانات موظف.
+- `/employees/profile/:id/documents`: ملفات وأوراق الموظف.
 - `/employees/requests`: صفحة داخلية قيد التجهيز لطلبات الموظفين.
 - `/employees/archive`: صفحة داخلية قيد التجهيز لأرشيف السجلات.
 - `/letters`: قائمة الخطابات.
@@ -110,13 +113,14 @@ src/environments/environment.prod.ts
 
 ## قاعدة البيانات
 
-السكريبت النهائي الحالي للداتا هو:
+سكريبتات Supabase الحالية:
 
 ```text
 SUPABASE_IMPORT_EMPLOYEES_2026.sql
+SUPABASE_EMPLOYEE_DOCUMENTS.sql
 ```
 
-هذا الملف يقوم بالآتي:
+ملف `SUPABASE_IMPORT_EMPLOYEES_2026.sql` يقوم بالآتي:
 
 - تفعيل إضافات `uuid-ossp` و `pg_trgm`.
 - تعديل جدول `employees` حتى يقبل الداتا الفعلية القادمة من ملف الموظفين.
@@ -125,6 +129,15 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 - إنشاء فهارس مهمة للبحث والترتيب.
 - إدخال أو تحديث 230 موظف.
 - إنشاء view باسم `active_employees`.
+
+ملف `SUPABASE_EMPLOYEE_DOCUMENTS.sql` يقوم بالآتي:
+
+- إنشاء جدول `employee_documents`.
+- إنشاء bucket خاص في Supabase Storage باسم `employee-documents`.
+- ضبط حجم الملف الأقصى على 50 MB.
+- السماح بملفات PDF، الصور، وملفات Word.
+- تفعيل RLS للجدول والـ Storage.
+- إنشاء view باسم `active_employee_documents`.
 
 ## الجداول المطلوبة في Supabase
 
@@ -223,6 +236,35 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 - `high`
 - `urgent`
 
+### employee_documents
+
+يستخدم لحفظ أوراق الموظفين وربط كل ملف بموظف محدد.
+
+حقول مهمة:
+
+- `id`
+- `employee_id`
+- `title`
+- `document_type`
+- `file_name`
+- `file_path`
+- `file_size`
+- `mime_type`
+- `issued_at`
+- `notes`
+- `uploaded_at`
+- `uploaded_by`
+- `deleted_at`
+
+أنواع الملفات:
+
+- `leave`: إجازة.
+- `appointment`: تعيين أو قرار إداري.
+- `national_id`: رقم قومي.
+- `medical`: طبي.
+- `disciplinary`: جزاء أو تحقيق.
+- `other`: أخرى.
+
 ### complaints
 
 موجودة في تصور السكيمة كجدول للشكاوى، لكنها ليست مفعلة كواجهة كاملة في النسخة الحالية.
@@ -275,8 +317,10 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 1. أنشئ جداول Supabase الأساسية حسب الجداول المطلوبة أعلاه.
 2. تأكد أن جدول `employees` يحتوي على حقل unique باسم `employee_id`.
 3. شغل `SUPABASE_IMPORT_EMPLOYEES_2026.sql` من Supabase SQL Editor.
-4. أنشئ مستخدم الأدمن من Supabase Auth.
-5. جرب تسجيل الدخول ثم افتح `/employees` للتأكد من ظهور البيانات.
+4. شغل `SUPABASE_EMPLOYEE_DOCUMENTS.sql` لإنشاء جدول الملفات و bucket الخاص بها.
+5. أنشئ مستخدم الأدمن من Supabase Auth.
+6. جرب تسجيل الدخول ثم افتح `/employees` للتأكد من ظهور البيانات.
+7. افتح ملفات أي موظف من `/employees/profile/:id/documents` وجرب رفع ملف PDF أو صورة سكانر.
 
 ## ملاحظات مهمة للداتا
 
@@ -298,6 +342,7 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 
 - `README.md`: التوثيق النهائي للمشروع.
 - `SUPABASE_IMPORT_EMPLOYEES_2026.sql`: ملف استيراد وتحديث موظفي 2026.
+- `SUPABASE_EMPLOYEE_DOCUMENTS.sql`: ملف إنشاء جدول وStorage ملفات الموظفين.
 - `package.json` و `package-lock.json`: إدارة الحزم.
 - `angular.json`, `tsconfig*.json`: إعدادات Angular و TypeScript.
 - `src/`: كود التطبيق.

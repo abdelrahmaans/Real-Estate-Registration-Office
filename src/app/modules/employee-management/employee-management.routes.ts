@@ -21,6 +21,13 @@ export const employeeManagementRoutes: Routes = [
         pathMatch: 'full',
     },
     {
+        path: 'profile/:id/documents',
+        loadComponent: () =>
+            import('./pages/employee-documents-page/employee-documents-page.component').then(
+                m => m.EmployeeDocumentsPageComponent
+            ),
+    },
+    {
         path: 'profile/:id',
         loadComponent: () =>
             import('./pages/employee-form-page/employee-form-page.component').then(

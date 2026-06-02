@@ -164,6 +164,9 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
                       </span>
                     </td>
                     <td class="actions-cell">
+                      <a class="icon-action" [routerLink]="['/employees/profile', employee.id, 'documents']" aria-label="ملفات الموظف">
+                        <mat-icon>folder_open</mat-icon>
+                      </a>
                       <a class="icon-action" [routerLink]="['/employees/profile', employee.id]" aria-label="تعديل الموظف">
                         <mat-icon>edit_square</mat-icon>
                       </a>
