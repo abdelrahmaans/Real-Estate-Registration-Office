@@ -2,14 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { DashboardAnalyticsService } from '../../services/dashboard-analytics.service';
-import {
-  ComplaintsByStatus,
-  DashboardAnalytics,
-  EmployeesByDepartment,
-  EmployeesByOffice,
-  LettersByMonth,
-  OfficeOrdersByStatus,
-} from '../../models/dashboard-analytics.model';
+import { DashboardAnalytics } from '../../models/dashboard-analytics.model';
 
 type StatCard = {
   label: string;
@@ -122,20 +115,22 @@ type StatCard = {
         <article class="chart-panel">
           <div class="panel-heading">
             <div>
-              <p class="section-kicker">الموظفون</p>
-              <h2>أعلى المكاتب</h2>
+              <p class="section-kicker">التحديثات</p>
+              <h2>آخر ما حدث في النظام</h2>
             </div>
-            <mat-icon>business</mat-icon>
+            <mat-icon>notifications_active</mat-icon>
           </div>
-          <div class="rank-list">
-            @for (item of analytics().employeesByOffice; track item.office_name) {
-              <div class="rank-item">
-                <span>{{ item.office_name }}</span>
-                <div class="rank-item__bar"><i [style.width.%]="barPercent(item.employee_count, maxOfficeEmployees())"></i></div>
-                <strong>{{ item.employee_count }}</strong>
+          <div class="updates-list">
+            @for (item of analytics().recentUpdates; track item.update_id) {
+              <div class="update-item">
+                <span class="update-item__icon"><mat-icon>{{ updateIcon(item.entity_type) }}</mat-icon></span>
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <small>{{ updateLabel(item.action, item.entity_type) }} - {{ shortDate(item.happened_at) }}</small>
+                </div>
               </div>
             } @empty {
-              <p class="empty-state">لا توجد بيانات مكاتب.</p>
+              <p class="empty-state">لا توجد تحديثات حديثة.</p>
             }
           </div>
         </article>
@@ -253,6 +248,11 @@ type StatCard = {
       .status-grid{display:flex;flex-wrap:wrap;gap:10px}
       .status-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:800}
       .status-pill strong{color:var(--text-primary)}
+      .updates-list{display:grid;gap:10px}
+      .update-item{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;padding:10px;border-radius:12px;background:var(--surface-muted);border:1px solid var(--surface-border)}
+      .update-item__icon{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+      .update-item strong{display:block;color:var(--text-primary);line-height:1.45}
+      .update-item small{display:block;margin-top:4px;color:var(--text-secondary);line-height:1.5}
       .empty-state{margin:0;color:var(--text-secondary);line-height:1.7}
       @media (max-width:1100px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-grid{grid-template-columns:1fr}.chart-panel--wide{grid-column:auto}}
       @media (max-width:720px){.dashboard-shell{padding:14px}.dashboard-header{align-items:stretch;flex-direction:column}.header-actions a{flex:1}.stats-grid,.quick-grid{grid-template-columns:1fr}.month-chart__row,.rank-item{grid-template-columns:1fr auto}.month-chart__track,.rank-item__bar{grid-column:1/-1}}
@@ -278,6 +278,7 @@ export class DashboardComponent {
     employeesByDepartment: [],
     complaintsByStatus: [],
     officeOrdersByStatus: [],
+    recentUpdates: [],
   });
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -297,7 +298,6 @@ export class DashboardComponent {
   });
 
   readonly maxLettersCount = computed(() => Math.max(1, ...this.analytics().lettersByMonth.map(item => item.total_count)));
-  readonly maxOfficeEmployees = computed(() => Math.max(1, ...this.analytics().employeesByOffice.map(item => item.employee_count)));
   readonly maxDepartmentEmployees = computed(() => Math.max(1, ...this.analytics().employeesByDepartment.map(item => item.employee_count)));
 
   constructor() {
@@ -323,6 +323,39 @@ export class DashboardComponent {
       pending: 'قيد المتابعة',
     };
     return labels[value] ?? value;
+  }
+
+  updateIcon(entityType: string): string {
+    const icons: Record<string, string> = {
+      employee: 'badge',
+      letter: 'mail',
+      complaint: 'support_agent',
+      office_order: 'assignment',
+      report: 'analytics',
+    };
+    return icons[entityType] ?? 'notifications';
+  }
+
+  updateLabel(action: string, entityType: string): string {
+    const actionLabels: Record<string, string> = {
+      create: 'إضافة',
+      insert: 'إضافة',
+      update: 'تحديث',
+      delete: 'حذف',
+      upload: 'رفع ملف',
+    };
+    const entityLabels: Record<string, string> = {
+      employee: 'موظف',
+      letter: 'خطاب',
+      complaint: 'شكوى',
+      office_order: 'أمر إداري',
+      report: 'تقرير',
+    };
+    return `${actionLabels[action] ?? action} ${entityLabels[entityType] ?? entityType}`;
+  }
+
+  shortDate(value: string): string {
+    return new Date(value).toLocaleDateString('ar-EG', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   private async loadAnalytics(): Promise<void> {

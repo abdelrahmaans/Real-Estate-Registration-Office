@@ -6,6 +6,7 @@ import {
     ComplaintsByStatus,
     DashboardAnalytics,
     DashboardSummary,
+    DashboardUpdate,
     EmployeesByDepartment,
     EmployeesByOffice,
     LettersByMonth,
@@ -47,6 +48,7 @@ export class DashboardAnalyticsService {
                 employeesByDepartment,
                 complaintsByStatus,
                 officeOrdersByStatus,
+                recentUpdates,
             ] = await Promise.all([
                 this.supabase.from('dashboard_summary').select('*').maybeSingle(),
                 this.supabase.from('dashboard_letters_by_month').select('*').order('month_start', { ascending: true }),
@@ -54,6 +56,7 @@ export class DashboardAnalyticsService {
                 this.supabase.from('dashboard_employees_by_department').select('*'),
                 this.supabase.from('dashboard_complaints_by_status').select('*'),
                 this.supabase.from('dashboard_office_orders_by_status').select('*'),
+                this.supabase.from('dashboard_recent_updates').select('*').order('happened_at', { ascending: false }).limit(8),
             ]);
 
             const firstError =
@@ -62,7 +65,8 @@ export class DashboardAnalyticsService {
                 employeesByOffice.error ||
                 employeesByDepartment.error ||
                 complaintsByStatus.error ||
-                officeOrdersByStatus.error;
+                officeOrdersByStatus.error ||
+                recentUpdates.error;
 
             if (firstError) {
                 return { data: this.emptyAnalytics(), error: firstError.message };
@@ -76,6 +80,7 @@ export class DashboardAnalyticsService {
                     employeesByDepartment: (employeesByDepartment.data ?? []) as EmployeesByDepartment[],
                     complaintsByStatus: (complaintsByStatus.data ?? []) as ComplaintsByStatus[],
                     officeOrdersByStatus: (officeOrdersByStatus.data ?? []) as OfficeOrdersByStatus[],
+                    recentUpdates: (recentUpdates.data ?? []) as DashboardUpdate[],
                 },
                 error: null,
             };
@@ -89,11 +94,11 @@ export class DashboardAnalyticsService {
             const [employeesResponse, lettersResponse] = await Promise.all([
                 this.supabase
                     .from('employees')
-                    .select('id, employment_status, office_code, office_name, department, job_title, deleted_at')
+                    .select('id, employee_id, full_name, employment_status, office_code, office_name, department, job_title, created_at, updated_at, deleted_at')
                     .is('deleted_at', null),
                 this.supabase
                     .from('letters')
-                    .select('id, type, letter_date, deleted_at')
+                    .select('id, letter_number, type, letter_date, subject, created_at, updated_at, deleted_at')
                     .is('deleted_at', null),
             ]);
 
@@ -106,9 +111,9 @@ export class DashboardAnalyticsService {
 
             const employees = (employeesResponse.data ?? []) as Pick<
                 Employee,
-                'id' | 'employment_status' | 'office_code' | 'office_name' | 'department' | 'job_title' | 'deleted_at'
+                'id' | 'employee_id' | 'full_name' | 'employment_status' | 'office_code' | 'office_name' | 'department' | 'job_title' | 'created_at' | 'updated_at' | 'deleted_at'
             >[];
-            const letters = (lettersResponse.data ?? []) as Pick<Letter, 'id' | 'type' | 'letter_date' | 'deleted_at'>[];
+            const letters = (lettersResponse.data ?? []) as Pick<Letter, 'id' | 'letter_number' | 'type' | 'letter_date' | 'subject' | 'created_at' | 'updated_at' | 'deleted_at'>[];
 
             return {
                 data: {
@@ -127,6 +132,7 @@ export class DashboardAnalyticsService {
                     employeesByDepartment: this.groupEmployeesByDepartment(employees),
                     complaintsByStatus: [],
                     officeOrdersByStatus: [],
+                    recentUpdates: this.buildFallbackUpdates(employees, letters),
                 },
                 error: null,
             };
@@ -188,6 +194,33 @@ export class DashboardAnalyticsService {
             .slice(0, 12);
     }
 
+    private buildFallbackUpdates(
+        employees: Pick<Employee, 'id' | 'employee_id' | 'full_name' | 'updated_at' | 'created_at'>[],
+        letters: Pick<Letter, 'id' | 'letter_number' | 'subject' | 'updated_at' | 'created_at'>[]
+    ): DashboardUpdate[] {
+        const employeeUpdates: DashboardUpdate[] = employees.map(employee => ({
+            update_id: `employee-${employee.id}`,
+            action: 'update',
+            entity_type: 'employee',
+            entity_id: employee.id,
+            title: `تحديث بيانات ${employee.full_name || employee.employee_id}`,
+            happened_at: employee.updated_at || employee.created_at,
+        }));
+        const letterUpdates: DashboardUpdate[] = letters.map(letter => ({
+            update_id: `letter-${letter.id}`,
+            action: 'update',
+            entity_type: 'letter',
+            entity_id: letter.id,
+            title: `تحديث خطاب ${letter.letter_number || letter.subject}`,
+            happened_at: letter.updated_at || letter.created_at,
+        }));
+
+        return [...employeeUpdates, ...letterUpdates]
+            .filter(update => Boolean(update.happened_at))
+            .sort((a, b) => b.happened_at.localeCompare(a.happened_at))
+            .slice(0, 8);
+    }
+
     private emptyAnalytics(): DashboardAnalytics {
         return {
             summary: EMPTY_SUMMARY,
@@ -196,6 +229,7 @@ export class DashboardAnalyticsService {
             employeesByDepartment: [],
             complaintsByStatus: [],
             officeOrdersByStatus: [],
+            recentUpdates: [],
         };
     }
 }

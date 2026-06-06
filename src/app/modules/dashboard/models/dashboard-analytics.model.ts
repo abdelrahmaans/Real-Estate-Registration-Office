@@ -37,6 +37,15 @@ export interface OfficeOrdersByStatus {
     order_count: number;
 }
 
+export interface DashboardUpdate {
+    update_id: string;
+    action: string;
+    entity_type: string;
+    entity_id: string | null;
+    title: string;
+    happened_at: string;
+}
+
 export interface DashboardAnalytics {
     summary: DashboardSummary;
     lettersByMonth: LettersByMonth[];
@@ -44,4 +53,5 @@ export interface DashboardAnalytics {
     employeesByDepartment: EmployeesByDepartment[];
     complaintsByStatus: ComplaintsByStatus[];
     officeOrdersByStatus: OfficeOrdersByStatus[];
+    recentUpdates: DashboardUpdate[];
 }

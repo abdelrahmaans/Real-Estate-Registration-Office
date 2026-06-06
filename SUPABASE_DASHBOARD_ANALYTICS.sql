@@ -106,6 +106,24 @@ WHERE deleted_at IS NULL
 GROUP BY COALESCE(status, 'active')
 ORDER BY order_count DESC, status;
 
+CREATE OR REPLACE VIEW public.dashboard_recent_updates AS
+SELECT
+  id::TEXT AS update_id,
+  action,
+  entity_type,
+  entity_id,
+  COALESCE(
+    new_values ->> 'full_name',
+    new_values ->> 'subject',
+    new_values ->> 'title',
+    new_values ->> 'letter_number',
+    entity_type
+  ) AS title,
+  created_at AS happened_at
+FROM public.audit_logs
+ORDER BY created_at DESC
+LIMIT 50;
+
 ALTER TABLE public.complaints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.office_orders ENABLE ROW LEVEL SECURITY;
 
@@ -118,5 +136,13 @@ DROP POLICY IF EXISTS "Authenticated users can view office orders" ON public.off
 CREATE POLICY "Authenticated users can view office orders"
   ON public.office_orders FOR SELECT TO authenticated
   USING (deleted_at IS NULL);
+
+GRANT SELECT ON public.dashboard_summary TO authenticated;
+GRANT SELECT ON public.dashboard_letters_by_month TO authenticated;
+GRANT SELECT ON public.dashboard_employees_by_office TO authenticated;
+GRANT SELECT ON public.dashboard_employees_by_department TO authenticated;
+GRANT SELECT ON public.dashboard_complaints_by_status TO authenticated;
+GRANT SELECT ON public.dashboard_office_orders_by_status TO authenticated;
+GRANT SELECT ON public.dashboard_recent_updates TO authenticated;
 
 COMMIT;
