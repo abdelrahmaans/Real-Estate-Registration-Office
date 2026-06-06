@@ -70,6 +70,31 @@ CREATE TABLE IF NOT EXISTS public.user_permissions (
   UNIQUE (user_id, permission)
 );
 
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS action VARCHAR(80);
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS entity_type VARCHAR(100);
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS entity_id TEXT;
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS old_values JSONB;
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS new_values JSONB;
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS ip_address INET;
+ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS permission VARCHAR(120);
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS granted BOOLEAN DEFAULT true;
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS granted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.user_permissions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS title VARCHAR(255);
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS message TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS type VARCHAR(50) DEFAULT 'info';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS read_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+
 ALTER TABLE public.employees ADD COLUMN IF NOT EXISTS department_id UUID REFERENCES public.departments(id) ON DELETE SET NULL;
 ALTER TABLE public.employees ADD COLUMN IF NOT EXISTS office_id UUID REFERENCES public.offices(id) ON DELETE SET NULL;
 ALTER TABLE public.employees ADD COLUMN IF NOT EXISTS job_title_id UUID REFERENCES public.job_titles(id) ON DELETE SET NULL;
@@ -133,6 +158,9 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON public.audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_user_permissions_user_permission ON public.user_permissions(user_id, permission);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_user_permissions_user_permission
+  ON public.user_permissions(user_id, permission)
+  WHERE user_id IS NOT NULL AND permission IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON public.notifications(user_id, is_read, created_at DESC);
 
 ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
