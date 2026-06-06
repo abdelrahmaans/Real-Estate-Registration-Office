@@ -4,7 +4,12 @@ import { AuditService } from '@core/services/audit.service';
 import { Letter, LetterCreatePayload } from '../models/letter.model';
 
 function getErrorMessage(err: unknown, fallback: string): string {
-    return err instanceof Error ? err.message : fallback;
+    if (err instanceof Error) return err.message;
+    if (err && typeof err === 'object' && 'message' in err) {
+        const message = (err as { message?: unknown }).message;
+        if (typeof message === 'string' && message.trim()) return message;
+    }
+    return fallback;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -93,15 +98,30 @@ export class LettersService {
                 priority: payload.priority || 'normal',
                 status: payload.status || 'new',
                 notes: payload.notes || null,
-                updated_at: new Date().toISOString(),
             };
 
-            const { data, error } = await this.supabase
+            let updatePayload: Record<string, unknown> = {
+                ...cleanPayload,
+                updated_at: new Date().toISOString(),
+            };
+            let response = await this.supabase
                 .from('letters')
-                .update(cleanPayload)
+                .update(updatePayload)
                 .eq('id', id)
                 .select()
                 .single();
+
+            if (response.error && response.error.message.toLowerCase().includes('updated_at')) {
+                updatePayload = { ...cleanPayload };
+                response = await this.supabase
+                    .from('letters')
+                    .update(updatePayload)
+                    .eq('id', id)
+                    .select()
+                    .single();
+            }
+
+            const { data, error } = response;
             if (error) throw error;
             await this.audit.log({
                 action: 'update',
@@ -120,10 +140,19 @@ export class LettersService {
         try {
             const oldRecord = await this.get(id);
             const deletedAt = new Date().toISOString();
-            const { error } = await this.supabase
+            let response = await this.supabase
                 .from('letters')
                 .update({ deleted_at: deletedAt, updated_at: deletedAt })
                 .eq('id', id);
+
+            if (response.error && response.error.message.toLowerCase().includes('updated_at')) {
+                response = await this.supabase
+                    .from('letters')
+                    .update({ deleted_at: deletedAt })
+                    .eq('id', id);
+            }
+
+            const { error } = response;
             if (error) throw error;
             await this.audit.log({
                 action: 'delete',
