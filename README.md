@@ -12,6 +12,7 @@
 - إدارة الموظفين مربوطة مباشرة بجدول `employees` في Supabase.
 - قسم ملفات الموظف مربوط بجدول `employee_documents` و Supabase Storage.
 - Phase 1 enterprise foundation يضيف التطبيع، audit logs، notifications، و user permissions بدون حذف الحقول القديمة.
+- Phase 2 dashboard analytics يضيف مؤشرات ورسوم تعتمد على views/RPC-friendly tables بدل تحميل كل الداتا في المتصفح.
 - البحث والفلترة في الموظفين حسب الاسم، كود الموظف، رقم الهاتف، المكتب، الوظيفة، والحالة.
 - إضافة وتعديل بيانات الموظفين من الواجهة مع حفظ التغيير في الباك اند.
 - رفع أوراق الموظف مثل الإجازات وقرارات التعيين والتقارير الطبية، ثم فتحها وطباعتها من المتصفح.
@@ -86,6 +87,8 @@ src/app/modules/auth
 
 src/app/modules/dashboard
   لوحة التحكم الرئيسية
+  models/dashboard-analytics.model.ts
+  services/dashboard-analytics.service.ts
 
 src/app/modules/employee-management
   models/employee.model.ts
@@ -126,6 +129,7 @@ src/environments/environment.prod.ts
 SUPABASE_IMPORT_EMPLOYEES_2026.sql
 SUPABASE_EMPLOYEE_DOCUMENTS.sql
 SUPABASE_ENTERPRISE_PHASE1.sql
+SUPABASE_DASHBOARD_ANALYTICS.sql
 ```
 
 ملف `SUPABASE_IMPORT_EMPLOYEES_2026.sql` يقوم بالآتي:
@@ -156,6 +160,18 @@ SUPABASE_ENTERPRISE_PHASE1.sql
 - إنشاء `user_permissions` للصلاحيات التفصيلية.
 - إنشاء `notifications`.
 - إنشاء view باسم `employee_directory`.
+
+ملف `SUPABASE_DASHBOARD_ANALYTICS.sql` يقوم بالآتي:
+
+- إنشاء/تجهيز جداول `complaints` و `office_orders` الأساسية لو غير موجودة.
+- إنشاء view باسم `dashboard_summary`.
+- إنشاء views للرسوم:
+  - `dashboard_letters_by_month`
+  - `dashboard_employees_by_office`
+  - `dashboard_employees_by_department`
+  - `dashboard_complaints_by_status`
+  - `dashboard_office_orders_by_status`
+- الداشبورد يستخدم هذه الـ views، ولو لم تكن موجودة بعد يعمل fallback آمن من جداول الموظفين والخطابات.
 
 ## الجداول المطلوبة في Supabase
 
@@ -358,9 +374,10 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 3. شغل `SUPABASE_IMPORT_EMPLOYEES_2026.sql` من Supabase SQL Editor.
 4. شغل `SUPABASE_EMPLOYEE_DOCUMENTS.sql` لإنشاء جدول الملفات و bucket الخاص بها.
 5. شغل `SUPABASE_ENTERPRISE_PHASE1.sql` لإضافة الجداول المرجعية و audit و permissions.
-6. أنشئ مستخدم الأدمن من Supabase Auth.
-7. جرب تسجيل الدخول ثم افتح `/employees` للتأكد من ظهور البيانات.
-8. افتح ملفات أي موظف من `/employees/profile/:id/documents` وجرب رفع ملف PDF أو صورة سكانر.
+6. شغل `SUPABASE_DASHBOARD_ANALYTICS.sql` لتفعيل مؤشرات ورسوم الداشبورد.
+7. أنشئ مستخدم الأدمن من Supabase Auth.
+8. جرب تسجيل الدخول ثم افتح `/employees` للتأكد من ظهور البيانات.
+9. افتح ملفات أي موظف من `/employees/profile/:id/documents` وجرب رفع ملف PDF أو صورة سكانر.
 
 ## ملاحظات مهمة للداتا
 
@@ -384,6 +401,7 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 - `SUPABASE_IMPORT_EMPLOYEES_2026.sql`: ملف استيراد وتحديث موظفي 2026.
 - `SUPABASE_EMPLOYEE_DOCUMENTS.sql`: ملف إنشاء جدول وStorage ملفات الموظفين.
 - `SUPABASE_ENTERPRISE_PHASE1.sql`: ملف التطبيع و audit و permissions.
+- `SUPABASE_DASHBOARD_ANALYTICS.sql`: ملف مؤشرات ورسوم الداشبورد.
 - `package.json` و `package-lock.json`: إدارة الحزم.
 - `angular.json`, `tsconfig*.json`: إعدادات Angular و TypeScript.
 - `src/`: كود التطبيق.
