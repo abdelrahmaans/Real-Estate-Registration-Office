@@ -244,11 +244,13 @@ export class DashboardAnalyticsService {
             newRecord['title'] ||
             newRecord['letter_number'] ||
             newRecord['file_name'] ||
+            newRecord['email'] ||
             oldRecord['full_name'] ||
             oldRecord['subject'] ||
             oldRecord['title'] ||
             oldRecord['letter_number'] ||
             oldRecord['file_name'] ||
+            oldRecord['email'] ||
             fallback
         );
     }

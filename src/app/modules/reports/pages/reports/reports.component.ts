@@ -7,8 +7,8 @@ import { EmployeeService } from '../../../employee-management/services/employee.
 import { Letter } from '../../../letters/models/letter.model';
 import { LettersService } from '../../../letters/services/letters.service';
 
-type EntityFilter = 'all' | 'employee' | 'letter' | 'employee_document' | 'complaint' | 'office_order' | 'report';
-type ActionFilter = 'all' | 'create' | 'update' | 'delete' | 'upload';
+type EntityFilter = 'all' | 'auth' | 'employee' | 'letter' | 'employee_document' | 'complaint' | 'office_order' | 'report';
+type ActionFilter = 'all' | 'create' | 'update' | 'delete' | 'upload' | 'login' | 'logout';
 type SearchScope = 'all' | 'updates' | 'employees' | 'letters';
 
 interface DashboardUpdateRow {
@@ -100,6 +100,7 @@ const DEFAULT_FILTERS: ReportsFilters = {
           <label for="entityFilter">نوع التحديث</label>
           <select id="entityFilter" [value]="filters().entity" (change)="setFilter('entity', eventValue($event))">
             <option value="all">كل الأنواع</option>
+            <option value="auth">دخول وخروج</option>
             <option value="employee">موظف</option>
             <option value="letter">خطاب</option>
             <option value="employee_document">ملف موظف</option>
@@ -117,6 +118,8 @@ const DEFAULT_FILTERS: ReportsFilters = {
             <option value="update">تحديث</option>
             <option value="delete">حذف</option>
             <option value="upload">رفع ملف</option>
+            <option value="login">تسجيل دخول</option>
+            <option value="logout">تسجيل خروج</option>
           </select>
         </div>
 
@@ -282,7 +285,8 @@ export class ReportsComponent {
     const updateRecords = filters.scope === 'employees' || filters.scope === 'letters'
       ? []
       : this.filteredUpdates().map(update => this.updateRecord(update));
-    const employeeRecords = filters.scope === 'updates' || filters.scope === 'letters'
+    const includeDirectData = filters.action === 'all';
+    const employeeRecords = !includeDirectData || filters.scope === 'updates' || filters.scope === 'letters' || !this.entityAllows('employee', filters.entity)
       ? []
       : this.employees()
           .filter(employee => this.matchesSearch([
@@ -295,7 +299,7 @@ export class ReportsComponent {
             employee.notes,
           ].join(' '), filters.search))
           .map(employee => this.employeeRecord(employee));
-    const letterRecords = filters.scope === 'updates' || filters.scope === 'employees'
+    const letterRecords = !includeDirectData || filters.scope === 'updates' || filters.scope === 'employees' || !this.entityAllows('letter', filters.entity)
       ? []
       : this.letters()
           .filter(letter => this.matchesSearch([
@@ -341,6 +345,7 @@ export class ReportsComponent {
   entityIcon(entityType: string): string {
     const icons: Record<string, string> = {
       employee: 'badge',
+      auth: 'login',
       letter: 'mail',
       employee_document: 'description',
       complaint: 'support_agent',
@@ -353,6 +358,7 @@ export class ReportsComponent {
   entityLabel(entityType: string): string {
     const labels: Record<string, string> = {
       employee: 'موظف',
+      auth: 'دخول وخروج',
       letter: 'خطاب',
       employee_document: 'ملف موظف',
       complaint: 'شكوى',
@@ -368,6 +374,8 @@ export class ReportsComponent {
       insert: 'إضافة',
       update: 'تحديث',
       delete: 'حذف',
+      login: 'تسجيل دخول',
+      logout: 'تسجيل خروج',
       file_upload: 'رفع ملف',
       file_delete: 'حذف ملف',
       upload: 'رفع ملف',
@@ -458,6 +466,10 @@ export class ReportsComponent {
     return action === filter;
   }
 
+  private entityAllows(entityType: EntityFilter, filter: EntityFilter): boolean {
+    return filter === 'all' || filter === entityType;
+  }
+
   private matchesDate(value: string, from: string, to: string): boolean {
     if (!value) return !from && !to;
     const day = value.slice(0, 10);
@@ -507,11 +519,13 @@ export class ReportsComponent {
       newRecord['title'] ||
       newRecord['letter_number'] ||
       newRecord['file_name'] ||
+      newRecord['email'] ||
       oldRecord['full_name'] ||
       oldRecord['subject'] ||
       oldRecord['title'] ||
       oldRecord['letter_number'] ||
       oldRecord['file_name'] ||
+      oldRecord['email'] ||
       fallback
     );
   }

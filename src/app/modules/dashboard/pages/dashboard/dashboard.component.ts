@@ -328,6 +328,7 @@ export class DashboardComponent {
   updateIcon(entityType: string): string {
     const icons: Record<string, string> = {
       employee: 'badge',
+      auth: 'login',
       letter: 'mail',
       complaint: 'support_agent',
       office_order: 'assignment',
@@ -343,12 +344,15 @@ export class DashboardComponent {
       insert: 'إضافة',
       update: 'تحديث',
       delete: 'حذف',
+      login: 'تسجيل دخول',
+      logout: 'تسجيل خروج',
       file_upload: 'رفع ملف',
       file_delete: 'حذف ملف',
       upload: 'رفع ملف',
     };
     const entityLabels: Record<string, string> = {
       employee: 'موظف',
+      auth: 'دخول وخروج',
       letter: 'خطاب',
       complaint: 'شكوى',
       office_order: 'أمر إداري',

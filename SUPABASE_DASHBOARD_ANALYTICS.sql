@@ -149,11 +149,13 @@ SELECT
     new_values ->> 'title',
     new_values ->> 'letter_number',
     new_values ->> 'file_name',
+    new_values ->> 'email',
     old_values ->> 'full_name',
     old_values ->> 'subject',
     old_values ->> 'title',
     old_values ->> 'letter_number',
     old_values ->> 'file_name',
+    old_values ->> 'email',
     entity_type
   ) AS title,
   created_at AS happened_at

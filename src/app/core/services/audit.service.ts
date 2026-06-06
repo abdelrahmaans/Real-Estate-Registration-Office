@@ -11,17 +11,20 @@ export class AuditService {
     async log(payload: AuditPayload): Promise<void> {
         try {
             const userId = payload.userId ?? await this.resolveCurrentUserId();
-            await this.supabase.from('audit_logs').insert([
-                {
-                    user_id: userId,
-                    action: payload.action,
-                    entity_type: payload.entityType,
-                    entity_id: payload.entityId ?? null,
-                    old_values: payload.oldValues ?? null,
-                    new_values: payload.newValues ?? null,
-                    ip_address: null,
-                },
-            ]);
+            const row = {
+                user_id: userId,
+                action: payload.action,
+                entity_type: payload.entityType,
+                entity_id: payload.entityId ?? null,
+                old_values: payload.oldValues ?? null,
+                new_values: payload.newValues ?? null,
+                ip_address: null,
+            };
+            const response = await this.supabase.from('audit_logs').insert([row]);
+
+            if (response.error) {
+                await this.supabase.from('audit_logs').insert([{ ...row, user_id: null }]);
+            }
         } catch {
             // Audit logging must never block the business operation.
         }
