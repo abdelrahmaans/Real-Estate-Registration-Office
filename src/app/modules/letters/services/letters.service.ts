@@ -24,6 +24,21 @@ export class LettersService {
         }
     }
 
+    async get(id: string) {
+        try {
+            const { data, error } = await this.supabase
+                .from('letters')
+                .select('*')
+                .eq('id', id)
+                .is('deleted_at', null)
+                .single();
+            if (error) throw error;
+            return { data: data as Letter, error: null };
+        } catch (err: unknown) {
+            return { data: null, error: getErrorMessage(err, 'Failed to load letter') };
+        }
+    }
+
     async create(payload: LetterCreatePayload) {
         try {
             const cleanPayload: Record<string, unknown> = {
@@ -32,10 +47,13 @@ export class LettersService {
                 type: payload.type,
                 category: payload.category || 'general',
                 letter_date: payload.letter_date,
+                sender: payload.sender || null,
+                receiver: payload.receiver || null,
                 subject: payload.subject,
                 summary: payload.summary || null,
                 priority: payload.priority || 'normal',
                 status: payload.status || 'new',
+                notes: payload.notes || null,
             };
 
             // attach created_by when available
@@ -56,6 +74,57 @@ export class LettersService {
             return { data: data as Letter, error: null };
         } catch (err: unknown) {
             return { data: null, error: getErrorMessage(err, 'Failed to create letter') };
+        }
+    }
+
+    async update(id: string, payload: LetterCreatePayload) {
+        try {
+            const cleanPayload: Record<string, unknown> = {
+                letter_number: payload.letter_number,
+                serial_number: payload.serial_number || null,
+                type: payload.type,
+                category: payload.category || 'general',
+                letter_date: payload.letter_date,
+                sender: payload.sender || null,
+                receiver: payload.receiver || null,
+                subject: payload.subject,
+                summary: payload.summary || null,
+                priority: payload.priority || 'normal',
+                status: payload.status || 'new',
+                notes: payload.notes || null,
+                updated_at: new Date().toISOString(),
+            };
+
+            const { data, error } = await this.supabase
+                .from('letters')
+                .update(cleanPayload)
+                .eq('id', id)
+                .select()
+                .single();
+            if (error) throw error;
+            await this.audit.log({
+                action: 'update',
+                entityType: 'letter',
+                entityId: id,
+                newValues: data as unknown as Record<string, unknown>,
+            });
+            return { data: data as Letter, error: null };
+        } catch (err: unknown) {
+            return { data: null, error: getErrorMessage(err, 'Failed to update letter') };
+        }
+    }
+
+    async delete(id: string) {
+        try {
+            const { error } = await this.supabase
+                .from('letters')
+                .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+                .eq('id', id);
+            if (error) throw error;
+            await this.audit.log({ action: 'delete', entityType: 'letter', entityId: id });
+            return { error: null };
+        } catch (err: unknown) {
+            return { error: getErrorMessage(err, 'Failed to delete letter') };
         }
     }
 }

@@ -56,7 +56,7 @@ export class DashboardAnalyticsService {
                 this.supabase.from('dashboard_employees_by_department').select('*'),
                 this.supabase.from('dashboard_complaints_by_status').select('*'),
                 this.supabase.from('dashboard_office_orders_by_status').select('*'),
-                this.supabase.from('dashboard_recent_updates').select('*').order('happened_at', { ascending: false }).limit(8),
+                this.supabase.from('dashboard_recent_updates').select('*').order('happened_at', { ascending: false }).limit(10),
             ]);
 
             const firstError =
@@ -218,7 +218,7 @@ export class DashboardAnalyticsService {
         return [...employeeUpdates, ...letterUpdates]
             .filter(update => Boolean(update.happened_at))
             .sort((a, b) => b.happened_at.localeCompare(a.happened_at))
-            .slice(0, 8);
+            .slice(0, 10);
     }
 
     private emptyAnalytics(): DashboardAnalytics {

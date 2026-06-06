@@ -122,7 +122,7 @@ SELECT
   created_at AS happened_at
 FROM public.audit_logs
 ORDER BY created_at DESC
-LIMIT 50;
+LIMIT 200;
 
 ALTER TABLE public.complaints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.office_orders ENABLE ROW LEVEL SECURITY;
