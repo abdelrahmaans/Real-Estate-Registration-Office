@@ -150,7 +150,7 @@ export class SupabaseService {
         try {
             const { data, error } = await this.supabaseClient
                 .from(table)
-                .update({ deletedAt: new Date().toISOString() })
+                .update({ deleted_at: new Date().toISOString() })
                 .eq('id', id)
                 .select();
 

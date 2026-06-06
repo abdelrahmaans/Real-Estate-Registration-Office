@@ -2,7 +2,7 @@
 
 نظام إدارة مكتب الشهر العقاري والتوثيق، مبني بـ Angular و Supabase لإدارة الموظفين والخطابات ولوحة متابعة مناسبة للأدمن.
 
-آخر تحديث موثق: 2026-06-02
+آخر تحديث موثق: 2026-06-06
 
 ## ملخص المشروع
 
@@ -11,6 +11,7 @@
 - لوحة تحكم رئيسية للوصول السريع إلى الموظفين، الخطابات، والتقارير.
 - إدارة الموظفين مربوطة مباشرة بجدول `employees` في Supabase.
 - قسم ملفات الموظف مربوط بجدول `employee_documents` و Supabase Storage.
+- Phase 1 enterprise foundation يضيف التطبيع، audit logs، notifications، و user permissions بدون حذف الحقول القديمة.
 - البحث والفلترة في الموظفين حسب الاسم، كود الموظف، رقم الهاتف، المكتب، الوظيفة، والحالة.
 - إضافة وتعديل بيانات الموظفين من الواجهة مع حفظ التغيير في الباك اند.
 - رفع أوراق الموظف مثل الإجازات وقرارات التعيين والتقارير الطبية، ثم فتحها وطباعتها من المتصفح.
@@ -70,9 +71,15 @@ npm test
 ```text
 src/app/core
   guards/auth.guard.ts
+  guards/permission.guard.ts
+  directives/can.directive.ts
+  services/audit.service.ts
+  services/permission.service.ts
   services/auth.service.ts
   services/supabase.service.ts
   models/auth.model.ts
+  models/audit.model.ts
+  models/permission.model.ts
 
 src/app/modules/auth
   صفحة تسجيل الدخول ومساراتها
@@ -118,6 +125,7 @@ src/environments/environment.prod.ts
 ```text
 SUPABASE_IMPORT_EMPLOYEES_2026.sql
 SUPABASE_EMPLOYEE_DOCUMENTS.sql
+SUPABASE_ENTERPRISE_PHASE1.sql
 ```
 
 ملف `SUPABASE_IMPORT_EMPLOYEES_2026.sql` يقوم بالآتي:
@@ -138,6 +146,16 @@ SUPABASE_EMPLOYEE_DOCUMENTS.sql
 - السماح بملفات PDF، الصور، وملفات Word.
 - تفعيل RLS للجدول والـ Storage.
 - إنشاء view باسم `active_employee_documents`.
+
+ملف `SUPABASE_ENTERPRISE_PHASE1.sql` يقوم بالآتي:
+
+- إنشاء جداول `departments`, `offices`, `job_titles`.
+- إضافة علاقات اختيارية جديدة في `employees`: `department_id`, `office_id`, `job_title_id`.
+- نقل القيم النصية الحالية إلى الجداول الجديدة بدون حذف `department`, `office_name`, `office_code`, `job_title`.
+- إنشاء `audit_logs` لتتبع العمليات المهمة.
+- إنشاء `user_permissions` للصلاحيات التفصيلية.
+- إنشاء `notifications`.
+- إنشاء view باسم `employee_directory`.
 
 ## الجداول المطلوبة في Supabase
 
@@ -265,6 +283,18 @@ SUPABASE_EMPLOYEE_DOCUMENTS.sql
 - `disciplinary`: جزاء أو تحقيق.
 - `other`: أخرى.
 
+### departments
+
+جدول مرجعي لتطبيع الإدارات وربطها بالموظفين لاحقا عن طريق `employees.department_id`.
+
+### offices
+
+جدول مرجعي للمكاتب والمأموريات، ويرتبط لاحقا بالموظفين عن طريق `employees.office_id`.
+
+### job_titles
+
+جدول مرجعي للوظائف، ويرتبط لاحقا بالموظفين عن طريق `employees.job_title_id`.
+
 ### complaints
 
 موجودة في تصور السكيمة كجدول للشكاوى، لكنها ليست مفعلة كواجهة كاملة في النسخة الحالية.
@@ -283,11 +313,20 @@ SUPABASE_EMPLOYEE_DOCUMENTS.sql
 
 ### audit and permissions
 
-الجداول المقترحة للتتبع والصلاحيات:
+جداول التتبع والصلاحيات:
 
 - `audit_logs`
 - `user_permissions`
 - `notifications`
+
+النظام يسجل حاليا بشكل غير معطل للتشغيل:
+
+- تسجيل الدخول والخروج.
+- إنشاء وتعديل وحذف الموظفين.
+- رفع وحذف ملفات الموظفين.
+- إنشاء الخطابات.
+
+لو جدول `audit_logs` لم يتم إنشاؤه بعد، التطبيق يكمل العمل بدون تعطيل العملية.
 
 ## بيانات موظفي 2026
 
@@ -318,9 +357,10 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 2. تأكد أن جدول `employees` يحتوي على حقل unique باسم `employee_id`.
 3. شغل `SUPABASE_IMPORT_EMPLOYEES_2026.sql` من Supabase SQL Editor.
 4. شغل `SUPABASE_EMPLOYEE_DOCUMENTS.sql` لإنشاء جدول الملفات و bucket الخاص بها.
-5. أنشئ مستخدم الأدمن من Supabase Auth.
-6. جرب تسجيل الدخول ثم افتح `/employees` للتأكد من ظهور البيانات.
-7. افتح ملفات أي موظف من `/employees/profile/:id/documents` وجرب رفع ملف PDF أو صورة سكانر.
+5. شغل `SUPABASE_ENTERPRISE_PHASE1.sql` لإضافة الجداول المرجعية و audit و permissions.
+6. أنشئ مستخدم الأدمن من Supabase Auth.
+7. جرب تسجيل الدخول ثم افتح `/employees` للتأكد من ظهور البيانات.
+8. افتح ملفات أي موظف من `/employees/profile/:id/documents` وجرب رفع ملف PDF أو صورة سكانر.
 
 ## ملاحظات مهمة للداتا
 
@@ -343,6 +383,7 @@ SUPABASE_IMPORT_EMPLOYEES_2026.sql
 - `README.md`: التوثيق النهائي للمشروع.
 - `SUPABASE_IMPORT_EMPLOYEES_2026.sql`: ملف استيراد وتحديث موظفي 2026.
 - `SUPABASE_EMPLOYEE_DOCUMENTS.sql`: ملف إنشاء جدول وStorage ملفات الموظفين.
+- `SUPABASE_ENTERPRISE_PHASE1.sql`: ملف التطبيع و audit و permissions.
 - `package.json` و `package-lock.json`: إدارة الحزم.
 - `angular.json`, `tsconfig*.json`: إعدادات Angular و TypeScript.
 - `src/`: كود التطبيق.

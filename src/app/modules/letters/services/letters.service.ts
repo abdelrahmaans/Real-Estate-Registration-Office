@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase.service';
+import { AuditService } from '@core/services/audit.service';
 import { Letter, LetterCreatePayload } from '../models/letter.model';
 
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -9,6 +10,7 @@ function getErrorMessage(err: unknown, fallback: string): string {
 @Injectable({ providedIn: 'root' })
 export class LettersService {
     private supabase = inject(SupabaseService).getClient();
+    private audit = inject(AuditService);
 
     async list(type?: string) {
         try {
@@ -45,6 +47,12 @@ export class LettersService {
 
             const { data, error } = await this.supabase.from('letters').insert([cleanPayload]).select().single();
             if (error) throw error;
+            await this.audit.log({
+                action: 'create',
+                entityType: 'letter',
+                entityId: (data as Letter).id,
+                newValues: data as unknown as Record<string, unknown>,
+            });
             return { data: data as Letter, error: null };
         } catch (err: unknown) {
             return { data: null, error: getErrorMessage(err, 'Failed to create letter') };

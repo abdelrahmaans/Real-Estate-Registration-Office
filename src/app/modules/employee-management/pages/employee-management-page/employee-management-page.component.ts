@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { CanDirective } from '@core/directives/can.directive';
 import {
   EmployeeFilterOptions,
   EmployeeFilters,
@@ -12,7 +13,7 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
 
 @Component({
   selector: 'app-employee-management-page',
-  imports: [RouterLink, MatIconModule],
+  imports: [RouterLink, MatIconModule, CanDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="page-shell" dir="rtl">
@@ -28,7 +29,7 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
             <mat-icon>dashboard</mat-icon>
             القائمة الرئيسية
           </a>
-          <a class="action-primary" routerLink="/employees/new">
+          <a class="action-primary" routerLink="/employees/new" appCan="employees.create">
             <mat-icon>person_add_alt_1</mat-icon>
             إضافة موظف
           </a>
@@ -167,13 +168,13 @@ type FilterEvent = Event & { target: HTMLInputElement | HTMLSelectElement };
                       </span>
                     </td>
                     <td class="actions-cell">
-                      <a class="icon-action" [routerLink]="['/employees/profile', employee.id, 'documents']" aria-label="ملفات الموظف">
+                      <a class="icon-action" [routerLink]="['/employees/profile', employee.id, 'documents']" appCan="employee_documents.read" aria-label="ملفات الموظف">
                         <mat-icon>folder_open</mat-icon>
                       </a>
-                      <a class="icon-action" [routerLink]="['/employees/profile', employee.id]" aria-label="تعديل الموظف">
+                      <a class="icon-action" [routerLink]="['/employees/profile', employee.id]" appCan="employees.update" aria-label="تعديل الموظف">
                         <mat-icon>edit_square</mat-icon>
                       </a>
-                      <button class="icon-action icon-action--danger" type="button" (click)="deleteEmployee(employee.id)" aria-label="حذف الموظف">
+                      <button class="icon-action icon-action--danger" type="button" appCan="employees.delete" (click)="deleteEmployee(employee.id)" aria-label="حذف الموظف">
                         <mat-icon>delete</mat-icon>
                       </button>
                     </td>

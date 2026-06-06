@@ -6,6 +6,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { User } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
+import { AuditService } from './audit.service';
 import {
     AuthState,
     LoginRequest,
@@ -36,6 +37,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 })
 export class AuthService {
     private readonly supabaseService = inject(SupabaseService);
+    private readonly audit = inject(AuditService);
     private readonly router = inject(Router);
 
     // Reactive state management using signals
@@ -151,6 +153,13 @@ export class AuthService {
 
             if (data?.session && data?.user) {
                 this.syncSessionState(data.user, data.session.access_token, data.session.refresh_token);
+                await this.audit.log({
+                    action: 'login',
+                    entityType: 'auth',
+                    entityId: data.user.id,
+                    userId: data.user.id,
+                    newValues: { email: data.user.email ?? null },
+                });
 
                 return { success: true, error: null };
             }
@@ -175,6 +184,15 @@ export class AuthService {
      */
     async logout(): Promise<void> {
         try {
+            const user = this.getCurrentUser();
+            await this.audit.log({
+                action: 'logout',
+                entityType: 'auth',
+                entityId: user?.id ?? null,
+                userId: user?.id ?? null,
+                oldValues: user ? { email: user.email, role: user.role } : null,
+            });
+
             const auth = this.supabaseService.getAuth();
             await auth.signOut();
 

@@ -1,19 +1,24 @@
 import { Routes } from '@angular/router';
+import { permissionGuard } from '@core/guards/permission.guard';
 
 export const employeeManagementRoutes: Routes = [
     {
         path: '',
+        canActivate: [permissionGuard],
         loadComponent: () =>
             import('./pages/employee-management-page/employee-management-page.component').then(
                 m => m.EmployeeManagementPageComponent
             ),
+        data: { permission: 'employees.read' },
     },
     {
         path: 'new',
+        canActivate: [permissionGuard],
         loadComponent: () =>
             import('./pages/employee-form-page/employee-form-page.component').then(
                 m => m.EmployeeFormPageComponent
             ),
+        data: { permission: 'employees.create' },
     },
     {
         path: 'profile',
@@ -22,17 +27,21 @@ export const employeeManagementRoutes: Routes = [
     },
     {
         path: 'profile/:id/documents',
+        canActivate: [permissionGuard],
         loadComponent: () =>
             import('./pages/employee-documents-page/employee-documents-page.component').then(
                 m => m.EmployeeDocumentsPageComponent
             ),
+        data: { permission: 'employee_documents.read' },
     },
     {
         path: 'profile/:id',
+        canActivate: [permissionGuard],
         loadComponent: () =>
             import('./pages/employee-form-page/employee-form-page.component').then(
                 m => m.EmployeeFormPageComponent
             ),
+        data: { permission: 'employees.update' },
     },
     {
         path: 'requests',

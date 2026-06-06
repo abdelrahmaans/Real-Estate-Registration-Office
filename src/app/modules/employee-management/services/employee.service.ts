@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase.service';
+import { AuditService } from '@core/services/audit.service';
 import { Employee, EmployeeCreatePayload } from '../models/employee.model';
 
 export type EmployeeFilters = {
@@ -22,6 +23,7 @@ type EmployeeRowPayload = Record<string, unknown>;
 })
 export class EmployeeService {
     private readonly supabase = inject(SupabaseService).getClient();
+    private readonly audit = inject(AuditService);
 
     async listEmployees(filters: EmployeeFilters = {}): Promise<{ data: Employee[]; error: string | null }> {
         try {
@@ -124,6 +126,13 @@ export class EmployeeService {
                 return { data: null, error: error.message };
             }
 
+            await this.audit.log({
+                action: 'create',
+                entityType: 'employee',
+                entityId: (data as Employee).id,
+                newValues: data as unknown as Record<string, unknown>,
+            });
+
             return { data: data as Employee, error: null };
         } catch (_error) {
             return { data: null, error: 'تعذر جلب بيانات الموظف.' };
@@ -164,6 +173,7 @@ export class EmployeeService {
         payload: Partial<EmployeeCreatePayload>
     ): Promise<{ data: Employee | null; error: string | null }> {
         try {
+            const oldRecord = await this.getEmployeeById(id);
             const { data, error } = await this.supabase
                 .from('employees')
                 .update(payload)
@@ -176,6 +186,14 @@ export class EmployeeService {
                 return { data: null, error: error.message };
             }
 
+            await this.audit.log({
+                action: 'update',
+                entityType: 'employee',
+                entityId: id,
+                oldValues: oldRecord.data as unknown as Record<string, unknown> | null,
+                newValues: data as unknown as Record<string, unknown>,
+            });
+
             return { data: data as Employee, error: null };
         } catch (_error) {
             return { data: null, error: 'تعذر تحديث بيانات الموظف.' };
@@ -184,15 +202,25 @@ export class EmployeeService {
 
     async softDeleteEmployee(id: string): Promise<{ error: string | null }> {
         try {
+            const oldRecord = await this.getEmployeeById(id);
+            const deletedAt = new Date().toISOString();
             const { error } = await this.supabase
                 .from('employees')
-                .update({ deleted_at: new Date().toISOString() })
+                .update({ deleted_at: deletedAt })
                 .eq('id', id)
                 .is('deleted_at', null);
 
             if (error) {
                 return { error: error.message };
             }
+
+            await this.audit.log({
+                action: 'delete',
+                entityType: 'employee',
+                entityId: id,
+                oldValues: oldRecord.data as unknown as Record<string, unknown> | null,
+                newValues: { deleted_at: deletedAt },
+            });
 
             return { error: null };
         } catch (_error) {

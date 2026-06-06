@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '@core/services/supabase.service';
+import { AuditService } from '@core/services/audit.service';
 import {
     EmployeeDocument,
     EmployeeDocumentCreatePayload,
@@ -22,6 +23,7 @@ const BUCKET_NAME = 'employee-documents';
 })
 export class EmployeeDocumentService {
     private readonly supabase = inject(SupabaseService).getClient();
+    private readonly audit = inject(AuditService);
 
     async listByEmployee(employeeId: string): Promise<{ data: EmployeeDocument[]; error: string | null }> {
         try {
@@ -84,6 +86,13 @@ export class EmployeeDocumentService {
                 return { data: null, error: error.message };
             }
 
+            await this.audit.log({
+                action: 'file_upload',
+                entityType: 'employee_document',
+                entityId: (data as EmployeeDocument).id,
+                newValues: data as unknown as Record<string, unknown>,
+            });
+
             return { data: data as EmployeeDocument, error: null };
         } catch {
             return { data: null, error: 'تعذر رفع الملف وحفظ بياناته.' };
@@ -108,15 +117,30 @@ export class EmployeeDocumentService {
 
     async softDeleteDocument(id: string): Promise<{ error: string | null }> {
         try {
+            const oldRecord = await this.supabase
+                .from('employee_documents')
+                .select('*')
+                .eq('id', id)
+                .is('deleted_at', null)
+                .maybeSingle();
+            const deletedAt = new Date().toISOString();
             const { error } = await this.supabase
                 .from('employee_documents')
-                .update({ deleted_at: new Date().toISOString() })
+                .update({ deleted_at: deletedAt })
                 .eq('id', id)
                 .is('deleted_at', null);
 
             if (error) {
                 return { error: error.message };
             }
+
+            await this.audit.log({
+                action: 'file_delete',
+                entityType: 'employee_document',
+                entityId: id,
+                oldValues: oldRecord.data as Record<string, unknown> | null,
+                newValues: { deleted_at: deletedAt },
+            });
 
             return { error: null };
         } catch {

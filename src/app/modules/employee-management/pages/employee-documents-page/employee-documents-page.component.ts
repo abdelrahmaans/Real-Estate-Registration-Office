@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { CanDirective } from '@core/directives/can.directive';
 import { Employee } from '../../models/employee.model';
 import {
     EmployeeDocument,
@@ -14,7 +15,7 @@ type FileInputEvent = Event & { target: HTMLInputElement };
 
 @Component({
     selector: 'app-employee-documents-page',
-    imports: [ReactiveFormsModule, RouterLink, MatIconModule],
+    imports: [ReactiveFormsModule, RouterLink, MatIconModule, CanDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <section class="documents-shell" dir="rtl">
@@ -62,7 +63,7 @@ type FileInputEvent = Event & { target: HTMLInputElement };
       }
 
       <main class="documents-grid">
-        <section class="upload-panel" aria-label="رفع ملف جديد">
+        <section class="upload-panel" appCan="employee_documents.create" aria-label="رفع ملف جديد">
           <div class="panel-heading">
             <span class="heading-icon"><mat-icon>upload_file</mat-icon></span>
             <div>
@@ -161,7 +162,7 @@ type FileInputEvent = Event & { target: HTMLInputElement };
                     <button class="icon-action" type="button" (click)="printDocument(document)" aria-label="طباعة الملف">
                       <mat-icon>print</mat-icon>
                     </button>
-                    <button class="icon-action icon-action--danger" type="button" (click)="deleteDocument(document.id)" aria-label="حذف الملف">
+                    <button class="icon-action icon-action--danger" type="button" appCan="employee_documents.delete" (click)="deleteDocument(document.id)" aria-label="حذف الملف">
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
