@@ -104,23 +104,29 @@ body {
 }
 
 /* Material Select Panel - Solid Background */
-::ng-deep .solid-select-panel {
+.cdk-overlay-container .solid-select-panel,
+.cdk-overlay-container .mat-mdc-select-panel,
+.mat-mdc-select-panel.solid-select-panel {
     background-color: var(--surface-solid) !important;
     backdrop-filter: none !important;
     border: 1px solid var(--surface-border) !important;
     color: var(--text-primary) !important;
+    box-shadow: var(--card-shadow) !important;
 }
 
-::ng-deep .solid-select-panel .mat-mdc-option {
+.cdk-overlay-container .solid-select-panel .mat-mdc-option,
+.cdk-overlay-container .mat-mdc-select-panel .mat-mdc-option {
     background-color: var(--surface-solid) !important;
     color: var(--text-primary) !important;
 }
 
-::ng-deep .solid-select-panel .mat-mdc-option:hover {
+.cdk-overlay-container .solid-select-panel .mat-mdc-option:hover,
+.cdk-overlay-container .mat-mdc-select-panel .mat-mdc-option:hover {
     background-color: var(--option-hover) !important;
 }
 
-::ng-deep .solid-select-panel .mat-mdc-option.mdc-list-item--selected {
+.cdk-overlay-container .solid-select-panel .mat-mdc-option.mdc-list-item--selected,
+.cdk-overlay-container .mat-mdc-select-panel .mat-mdc-option.mdc-list-item--selected {
     background-color: var(--accent-soft) !important;
     color: var(--accent) !important;
 }

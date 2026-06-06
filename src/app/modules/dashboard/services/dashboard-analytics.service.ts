@@ -91,7 +91,7 @@ export class DashboardAnalyticsService {
 
     private async loadFallback(reason: string): Promise<{ data: DashboardAnalytics; error: string | null }> {
         try {
-            const [employeesResponse, lettersResponse] = await Promise.all([
+            const [employeesResponse, lettersResponse, auditResponse] = await Promise.all([
                 this.supabase
                     .from('employees')
                     .select('id, employee_id, full_name, employment_status, office_code, office_name, department, job_title, created_at, updated_at, deleted_at')
@@ -100,6 +100,11 @@ export class DashboardAnalyticsService {
                     .from('letters')
                     .select('id, letter_number, type, letter_date, subject, created_at, updated_at, deleted_at')
                     .is('deleted_at', null),
+                this.supabase
+                    .from('audit_logs')
+                    .select('id, action, entity_type, entity_id, old_values, new_values, created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(10),
             ]);
 
             if (employeesResponse.error || lettersResponse.error) {
@@ -132,7 +137,16 @@ export class DashboardAnalyticsService {
                     employeesByDepartment: this.groupEmployeesByDepartment(employees),
                     complaintsByStatus: [],
                     officeOrdersByStatus: [],
-                    recentUpdates: this.buildFallbackUpdates(employees, letters),
+                    recentUpdates: auditResponse.error
+                        ? this.buildFallbackUpdates(employees, letters)
+                        : (auditResponse.data ?? []).map(row => ({
+                            update_id: String(row.id),
+                            action: String(row.action ?? ''),
+                            entity_type: String(row.entity_type ?? ''),
+                            entity_id: row.entity_id ? String(row.entity_id) : null,
+                            title: this.resolveAuditTitle(row.new_values, row.old_values, String(row.entity_type ?? '')),
+                            happened_at: String(row.created_at ?? ''),
+                        })),
                 },
                 error: null,
             };
@@ -219,6 +233,28 @@ export class DashboardAnalyticsService {
             .filter(update => Boolean(update.happened_at))
             .sort((a, b) => b.happened_at.localeCompare(a.happened_at))
             .slice(0, 10);
+    }
+
+    private resolveAuditTitle(newValues: unknown, oldValues: unknown, fallback: string): string {
+        const newRecord = this.asRecord(newValues);
+        const oldRecord = this.asRecord(oldValues);
+        return String(
+            newRecord['full_name'] ||
+            newRecord['subject'] ||
+            newRecord['title'] ||
+            newRecord['letter_number'] ||
+            newRecord['file_name'] ||
+            oldRecord['full_name'] ||
+            oldRecord['subject'] ||
+            oldRecord['title'] ||
+            oldRecord['letter_number'] ||
+            oldRecord['file_name'] ||
+            fallback
+        );
+    }
+
+    private asRecord(value: unknown): Record<string, unknown> {
+        return value && typeof value === 'object' ? value as Record<string, unknown> : {};
     }
 
     private emptyAnalytics(): DashboardAnalytics {

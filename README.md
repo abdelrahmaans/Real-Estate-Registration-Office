@@ -175,6 +175,8 @@ SUPABASE_DASHBOARD_ANALYTICS.sql
   - `dashboard_complaints_by_status`
   - `dashboard_office_orders_by_status`
 - إنشاء view باسم `dashboard_recent_updates` لعرض آخر التحديثات في الداشبورد من `audit_logs`.
+- تجهيز أعمدة وسياسات `letters` المطلوبة للتعديل والحذف الناعم من الواجهة.
+- إضافة سياسة قراءة لـ `audit_logs` حتى تظهر التحديثات في الداشبورد وصفحة التقارير.
 - الداشبورد يستخدم هذه الـ views، ولو لم تكن موجودة بعد يعمل fallback آمن من جداول الموظفين والخطابات.
 
 ## الجداول المطلوبة في Supabase

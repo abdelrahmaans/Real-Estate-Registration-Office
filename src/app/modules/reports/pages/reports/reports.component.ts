@@ -7,7 +7,7 @@ import { EmployeeService } from '../../../employee-management/services/employee.
 import { Letter } from '../../../letters/models/letter.model';
 import { LettersService } from '../../../letters/services/letters.service';
 
-type EntityFilter = 'all' | 'employee' | 'letter' | 'complaint' | 'office_order' | 'report';
+type EntityFilter = 'all' | 'employee' | 'letter' | 'employee_document' | 'complaint' | 'office_order' | 'report';
 type ActionFilter = 'all' | 'create' | 'update' | 'delete' | 'upload';
 type SearchScope = 'all' | 'updates' | 'employees' | 'letters';
 
@@ -102,6 +102,7 @@ const DEFAULT_FILTERS: ReportsFilters = {
             <option value="all">كل الأنواع</option>
             <option value="employee">موظف</option>
             <option value="letter">خطاب</option>
+            <option value="employee_document">ملف موظف</option>
             <option value="complaint">شكوى</option>
             <option value="office_order">أمر إداري</option>
             <option value="report">تقرير</option>
@@ -270,7 +271,7 @@ export class ReportsComponent {
 
     return this.updates().filter(update =>
       (filters.entity === 'all' || update.entity_type === filters.entity)
-      && (filters.action === 'all' || update.action === filters.action)
+      && this.matchesAction(update.action, filters.action)
       && this.matchesSearch(`${update.title} ${update.action} ${update.entity_type}`, filters.search)
       && this.matchesDate(update.happened_at, filters.dateFrom, filters.dateTo)
     );
@@ -341,6 +342,7 @@ export class ReportsComponent {
     const icons: Record<string, string> = {
       employee: 'badge',
       letter: 'mail',
+      employee_document: 'description',
       complaint: 'support_agent',
       office_order: 'assignment',
       report: 'analytics',
@@ -352,6 +354,7 @@ export class ReportsComponent {
     const labels: Record<string, string> = {
       employee: 'موظف',
       letter: 'خطاب',
+      employee_document: 'ملف موظف',
       complaint: 'شكوى',
       office_order: 'أمر إداري',
       report: 'تقرير',
@@ -365,6 +368,8 @@ export class ReportsComponent {
       insert: 'إضافة',
       update: 'تحديث',
       delete: 'حذف',
+      file_upload: 'رفع ملف',
+      file_delete: 'حذف ملف',
       upload: 'رفع ملف',
     };
     return labels[action] ?? action;
@@ -379,7 +384,7 @@ export class ReportsComponent {
     this.error.set(null);
 
     const [updatesResponse, employeesResponse, lettersResponse] = await Promise.all([
-      this.supabase.from('dashboard_recent_updates').select('*').order('happened_at', { ascending: false }).limit(200),
+      this.loadUpdates(),
       this.employeeService.list(),
       this.lettersService.list(),
     ]);
@@ -387,10 +392,10 @@ export class ReportsComponent {
     this.loading.set(false);
 
     if (updatesResponse.error || employeesResponse.error || lettersResponse.error) {
-      this.error.set(updatesResponse.error?.message || employeesResponse.error || lettersResponse.error || 'تعذر تحميل بيانات المتابعة.');
+      this.error.set(updatesResponse.error || employeesResponse.error || lettersResponse.error || 'تعذر تحميل بيانات المتابعة.');
     }
 
-    this.updates.set((updatesResponse.data ?? []) as DashboardUpdateRow[]);
+    this.updates.set(updatesResponse.data);
     this.employees.set(employeesResponse.data || []);
     this.letters.set(lettersResponse.data || []);
   }
@@ -446,9 +451,72 @@ export class ReportsComponent {
     return value.toLowerCase().includes(normalizedSearch);
   }
 
+  private matchesAction(action: string, filter: ActionFilter): boolean {
+    if (filter === 'all') return true;
+    if (filter === 'upload') return action === 'upload' || action === 'file_upload';
+    if (filter === 'delete') return action === 'delete' || action === 'file_delete';
+    return action === filter;
+  }
+
   private matchesDate(value: string, from: string, to: string): boolean {
     if (!value) return !from && !to;
     const day = value.slice(0, 10);
     return (!from || day >= from) && (!to || day <= to);
+  }
+
+  private async loadUpdates(): Promise<{ data: DashboardUpdateRow[]; error: string | null }> {
+    const viewResponse = await this.supabase
+      .from('dashboard_recent_updates')
+      .select('*')
+      .order('happened_at', { ascending: false })
+      .limit(200);
+
+    if (!viewResponse.error) {
+      return { data: (viewResponse.data ?? []) as DashboardUpdateRow[], error: null };
+    }
+
+    const auditResponse = await this.supabase
+      .from('audit_logs')
+      .select('id, action, entity_type, entity_id, old_values, new_values, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (auditResponse.error) {
+      return { data: [], error: viewResponse.error.message || auditResponse.error.message };
+    }
+
+    return {
+      data: (auditResponse.data ?? []).map(row => ({
+        update_id: String(row.id),
+        action: String(row.action ?? ''),
+        entity_type: String(row.entity_type ?? ''),
+        entity_id: row.entity_id ? String(row.entity_id) : null,
+        title: this.resolveAuditTitle(row.new_values, row.old_values, String(row.entity_type ?? '')),
+        happened_at: String(row.created_at ?? ''),
+      })),
+      error: null,
+    };
+  }
+
+  private resolveAuditTitle(newValues: unknown, oldValues: unknown, fallback: string): string {
+    const newRecord = this.asRecord(newValues);
+    const oldRecord = this.asRecord(oldValues);
+    return String(
+      newRecord['full_name'] ||
+      newRecord['subject'] ||
+      newRecord['title'] ||
+      newRecord['letter_number'] ||
+      newRecord['file_name'] ||
+      oldRecord['full_name'] ||
+      oldRecord['subject'] ||
+      oldRecord['title'] ||
+      oldRecord['letter_number'] ||
+      oldRecord['file_name'] ||
+      fallback
+    );
+  }
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' ? value as Record<string, unknown> : {};
   }
 }

@@ -126,13 +126,6 @@ export class EmployeeService {
                 return { data: null, error: error.message };
             }
 
-            await this.audit.log({
-                action: 'create',
-                entityType: 'employee',
-                entityId: (data as Employee).id,
-                newValues: data as unknown as Record<string, unknown>,
-            });
-
             return { data: data as Employee, error: null };
         } catch (_error) {
             return { data: null, error: 'تعذر جلب بيانات الموظف.' };
@@ -161,6 +154,13 @@ export class EmployeeService {
             if (error) {
                 return { data: null, error: error.message };
             }
+
+            await this.audit.log({
+                action: 'create',
+                entityType: 'employee',
+                entityId: (data as Employee).id,
+                newValues: data as unknown as Record<string, unknown>,
+            });
 
             return { data: data as Employee, error: null };
         } catch (_error) {

@@ -79,6 +79,7 @@ export class LettersService {
 
     async update(id: string, payload: LetterCreatePayload) {
         try {
+            const oldRecord = await this.get(id);
             const cleanPayload: Record<string, unknown> = {
                 letter_number: payload.letter_number,
                 serial_number: payload.serial_number || null,
@@ -106,6 +107,7 @@ export class LettersService {
                 action: 'update',
                 entityType: 'letter',
                 entityId: id,
+                oldValues: oldRecord.data as unknown as Record<string, unknown> | null,
                 newValues: data as unknown as Record<string, unknown>,
             });
             return { data: data as Letter, error: null };
@@ -116,12 +118,20 @@ export class LettersService {
 
     async delete(id: string) {
         try {
+            const oldRecord = await this.get(id);
+            const deletedAt = new Date().toISOString();
             const { error } = await this.supabase
                 .from('letters')
-                .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+                .update({ deleted_at: deletedAt, updated_at: deletedAt })
                 .eq('id', id);
             if (error) throw error;
-            await this.audit.log({ action: 'delete', entityType: 'letter', entityId: id });
+            await this.audit.log({
+                action: 'delete',
+                entityType: 'letter',
+                entityId: id,
+                oldValues: oldRecord.data as unknown as Record<string, unknown> | null,
+                newValues: { deleted_at: deletedAt },
+            });
             return { error: null };
         } catch (err: unknown) {
             return { error: getErrorMessage(err, 'Failed to delete letter') };

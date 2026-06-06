@@ -331,6 +331,7 @@ export class DashboardComponent {
       letter: 'mail',
       complaint: 'support_agent',
       office_order: 'assignment',
+      employee_document: 'description',
       report: 'analytics',
     };
     return icons[entityType] ?? 'notifications';
@@ -342,6 +343,8 @@ export class DashboardComponent {
       insert: 'إضافة',
       update: 'تحديث',
       delete: 'حذف',
+      file_upload: 'رفع ملف',
+      file_delete: 'حذف ملف',
       upload: 'رفع ملف',
     };
     const entityLabels: Record<string, string> = {
@@ -349,6 +352,7 @@ export class DashboardComponent {
       letter: 'خطاب',
       complaint: 'شكوى',
       office_order: 'أمر إداري',
+      employee_document: 'ملف موظف',
       report: 'تقرير',
     };
     return `${actionLabels[action] ?? action} ${entityLabels[entityType] ?? entityType}`;

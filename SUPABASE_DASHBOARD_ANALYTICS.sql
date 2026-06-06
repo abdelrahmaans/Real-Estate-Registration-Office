@@ -32,6 +32,14 @@ ALTER TABLE public.office_orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMP W
 ALTER TABLE public.office_orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 ALTER TABLE public.office_orders ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
 
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS sender VARCHAR(255);
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS receiver VARCHAR(255);
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS priority VARCHAR(50) DEFAULT 'normal';
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'new';
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
+ALTER TABLE public.letters ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_complaints_status ON public.complaints(status);
 CREATE INDEX IF NOT EXISTS idx_complaints_deleted_at ON public.complaints(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_office_orders_status ON public.office_orders(status);
@@ -117,6 +125,12 @@ SELECT
     new_values ->> 'subject',
     new_values ->> 'title',
     new_values ->> 'letter_number',
+    new_values ->> 'file_name',
+    old_values ->> 'full_name',
+    old_values ->> 'subject',
+    old_values ->> 'title',
+    old_values ->> 'letter_number',
+    old_values ->> 'file_name',
     entity_type
   ) AS title,
   created_at AS happened_at
@@ -126,6 +140,8 @@ LIMIT 200;
 
 ALTER TABLE public.complaints ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.office_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.letters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Authenticated users can view complaints" ON public.complaints;
 CREATE POLICY "Authenticated users can view complaints"
@@ -137,6 +153,27 @@ CREATE POLICY "Authenticated users can view office orders"
   ON public.office_orders FOR SELECT TO authenticated
   USING (deleted_at IS NULL);
 
+DROP POLICY IF EXISTS "Authenticated users can view letters" ON public.letters;
+CREATE POLICY "Authenticated users can view letters"
+  ON public.letters FOR SELECT TO authenticated
+  USING (deleted_at IS NULL);
+
+DROP POLICY IF EXISTS "Authenticated users can create letters" ON public.letters;
+CREATE POLICY "Authenticated users can create letters"
+  ON public.letters FOR INSERT TO authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authenticated users can update letters" ON public.letters;
+CREATE POLICY "Authenticated users can update letters"
+  ON public.letters FOR UPDATE TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authenticated users can view audit logs" ON public.audit_logs;
+CREATE POLICY "Authenticated users can view audit logs"
+  ON public.audit_logs FOR SELECT TO authenticated
+  USING (true);
+
 GRANT SELECT ON public.dashboard_summary TO authenticated;
 GRANT SELECT ON public.dashboard_letters_by_month TO authenticated;
 GRANT SELECT ON public.dashboard_employees_by_office TO authenticated;
@@ -144,5 +181,6 @@ GRANT SELECT ON public.dashboard_employees_by_department TO authenticated;
 GRANT SELECT ON public.dashboard_complaints_by_status TO authenticated;
 GRANT SELECT ON public.dashboard_office_orders_by_status TO authenticated;
 GRANT SELECT ON public.dashboard_recent_updates TO authenticated;
+GRANT SELECT ON public.audit_logs TO authenticated;
 
 COMMIT;

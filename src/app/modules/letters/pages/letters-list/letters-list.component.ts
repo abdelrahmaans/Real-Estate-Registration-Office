@@ -165,7 +165,7 @@ const DEFAULT_FILTERS: LetterFilters = {
                 <mat-icon>edit</mat-icon>
                 تعديل
               </a>
-              <button class="btn-danger" type="button" [disabled]="deletingId() === letter.id" (click)="deleteLetter(letter)">
+              <button class="btn-danger" type="button" [disabled]="deletingId() === letter.id" (click)="requestDelete(letter)">
                 <mat-icon>delete</mat-icon>
                 حذف
               </button>
@@ -175,6 +175,26 @@ const DEFAULT_FILTERS: LetterFilters = {
           <p class="empty-state">لا توجد خطابات مطابقة للفلاتر الحالية.</p>
         }
       </section>
+
+      @if (pendingDelete(); as letter) {
+        <div class="modal-backdrop" role="presentation" (click)="cancelDelete()">
+          <section class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="deleteLetterTitle" (click)="$event.stopPropagation()">
+            <span class="confirm-modal__icon"><mat-icon>warning</mat-icon></span>
+            <div>
+              <h2 id="deleteLetterTitle">تأكيد حذف الخطاب</h2>
+              <p>سيتم حذف الخطاب حذفًا ناعمًا من القائمة، ويمكن تتبع العملية في سجل التحديثات.</p>
+              <strong>{{ letter.subject }}</strong>
+            </div>
+            <div class="confirm-modal__actions">
+              <button class="btn-secondary" type="button" (click)="cancelDelete()">إلغاء</button>
+              <button class="btn-danger" type="button" [disabled]="deletingId() === letter.id" (click)="confirmDelete()">
+                <mat-icon>delete</mat-icon>
+                تأكيد الحذف
+              </button>
+            </div>
+          </section>
+        </div>
+      }
     </section>
   `,
   styles: [
@@ -228,6 +248,13 @@ const DEFAULT_FILTERS: LetterFilters = {
       dd{margin:4px 0 0;color:var(--text-primary);font-weight:800}
       .letter-actions{border-top:1px solid var(--surface-border);padding-top:12px}
       .empty-state{grid-column:1/-1;margin:0;color:var(--text-secondary);line-height:1.7;padding:16px;background:var(--surface-solid);border:1px solid var(--surface-border);border-radius:12px}
+      .modal-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(15,23,42,.44);backdrop-filter:blur(8px)}
+      .confirm-modal{width:min(100%,460px);display:grid;gap:14px;padding:18px;border-radius:14px;background:var(--surface-solid);border:1px solid var(--surface-border);box-shadow:0 24px 70px rgba(2,6,23,.32);color:var(--text-primary)}
+      .confirm-modal__icon{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;background:var(--danger-soft);color:var(--danger)}
+      .confirm-modal h2{font-size:1.2rem}
+      .confirm-modal p{margin:8px 0;color:var(--text-secondary);line-height:1.7}
+      .confirm-modal strong{display:block;color:var(--text-primary)}
+      .confirm-modal__actions{display:flex;justify-content:flex-start;gap:10px;flex-wrap:wrap}
       @media (max-width:1180px){.filters-panel{grid-template-columns:repeat(3,minmax(0,1fr))}.field--wide{grid-column:span 3}.letters-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
       @media (max-width:760px){.letters-shell{padding:14px}.letters-header{align-items:stretch;flex-direction:column}.header-actions a{flex:1}.filters-panel,.letters-grid,.summary-grid{grid-template-columns:1fr}.field--wide{grid-column:auto}.letter-meta{grid-template-columns:1fr}.letter-actions a,.letter-actions button{flex:1}}
     `,
@@ -240,6 +267,7 @@ export class LettersListComponent {
   readonly filters = signal<LetterFilters>({ ...DEFAULT_FILTERS });
   readonly loading = signal(false);
   readonly deletingId = signal<string | null>(null);
+  readonly pendingDelete = signal<Letter | null>(null);
   readonly error = signal<string | null>(null);
 
   readonly statusOptions = computed(() =>
@@ -303,8 +331,18 @@ export class LettersListComponent {
     this.filters.set({ ...DEFAULT_FILTERS });
   }
 
-  async deleteLetter(letter: Letter): Promise<void> {
-    if (!window.confirm(`تأكيد حذف الخطاب: ${letter.subject}`)) return;
+  requestDelete(letter: Letter): void {
+    this.pendingDelete.set(letter);
+  }
+
+  cancelDelete(): void {
+    if (this.deletingId()) return;
+    this.pendingDelete.set(null);
+  }
+
+  async confirmDelete(): Promise<void> {
+    const letter = this.pendingDelete();
+    if (!letter) return;
 
     this.deletingId.set(letter.id);
     this.error.set(null);
@@ -317,6 +355,7 @@ export class LettersListComponent {
     }
 
     this.letters.update(letters => letters.filter(item => item.id !== letter.id));
+    this.pendingDelete.set(null);
   }
 
   displayDate(value: string): string {
